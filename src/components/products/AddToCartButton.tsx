@@ -2,25 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 
 interface AddToCartButtonProps {
   productId: number;
-  isLoggedIn: boolean;
 }
 
 // Denna är väldigt värd att break down och dissect i lugn och ro efter deadline
-export default function AddToCartButton({ productId, isLoggedIn }: AddToCartButtonProps) {
+export default function AddToCartButton({ productId }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
   const router = useRouter();
-
-  function focusLogin() {
-    document.getElementById('username')?.focus();
-  }
 
   async function handleAddToCart() {
     setError(null);
@@ -35,9 +29,7 @@ export default function AddToCartButton({ productId, isLoggedIn }: AddToCartButt
       });
 
       if (!res.ok) {
-        setError(res.status === 401
-          ? 'Du måste vara inloggad för att handla.'
-          : 'Kunde inte lägga till i varukorgen.');
+        setError('Kunde inte lägga till i varukorgen.');
         return;
       }
 
@@ -48,20 +40,6 @@ export default function AddToCartButton({ productId, isLoggedIn }: AddToCartButt
     } finally {
       setIsAdding(false);
     }
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div>
-        <button type='button' onClick={focusLogin} className="lp-btn-primary w-full sm:w-auto">
-          Logga in för att handla
-        </button>
-        <p className="mt-6 text-xs text-muted">
-          Du hittar inloggningen längst upp till höger. Testanvändare finns på{' '}
-          <Link href="/about" className="text-accent underline underline-offset-4">om-sidan</Link>.
-        </p>
-      </div>
-    )
   }
 
   return (

@@ -82,7 +82,7 @@ export default async function DetailedProductPage({ params }: PageProps<'/produc
             )}
           </div>
 
-          <AddToCartButton productId={product.id} isLoggedIn={user !== null} />
+          <AddToCartButton productId={product.id} />
 
           {product.description && (
             <div className="mt-10 border-t border-line pt-8">

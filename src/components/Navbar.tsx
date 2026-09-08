@@ -10,7 +10,6 @@ import CartDropdown from './navbar/CartDropdown';
 // Butikens egen nav är versal och spärrad. Vi speglar strukturen med våra egna sidor
 const NAV_LINKS = [
   { href: '/products', label: 'Produkter' },
-  { href: '/profile', label: 'Min sida' },
 ];
 
 export default async function Navbar() {
@@ -57,14 +56,16 @@ export default async function Navbar() {
                 Hej {user.role_name === 'admin' ? "Admin" : user.username}!
               </span>
 
-              {/* Varukorgen kräver inloggning, så den visas bara för inloggade.
-                  Annars hade klicket bara lett till en återvändsgränd */}
-              <CartDropdown items={cartItems ?? []} itemCount={cartItemCount} />
+              <CartDropdown items={cartItems} itemCount={cartItemCount} />
 
               <LogoutButton />
             </>
           ) : (
-            <LoginForm />
+            <>
+              <LoginForm />
+
+              <CartDropdown items={cartItems} itemCount={cartItemCount} />
+            </>
           )}
         </div>
 

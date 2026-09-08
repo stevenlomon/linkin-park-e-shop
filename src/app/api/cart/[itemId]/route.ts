@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { resolveCartId } from '@/lib/cart';
 
 // Har aldrig sett RouteContext innan. Tydligen är det equivalent med `{ params: Promise<{ itemId: string }> }`
 export async function PATCH(req: Request, ctx: RouteContext<'/api/cart/[itemId]'>) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Du måste vara inloggad' }, { status: 401 });
+  const cartId = await resolveCartId();
+  if (cartId === null) return NextResponse.json({ error: 'Hittades inte' }, { status: 404 });
 
   const body = await req.json();
 
@@ -20,12 +20,11 @@ export async function PATCH(req: Request, ctx: RouteContext<'/api/cart/[itemId]'
     name: 'update-cart-item',
     // WHERE-delen är superviktig här av säkerhetsskäl; det är den som ser till att vi endast kan ändra *vår* kundvagn!
     text: `
-      UPDATE carts_products cp
+      UPDATE carts_products
       SET quantity = $1
-      FROM cart c
-      WHERE cp.id = $2 AND cp.cart_id = c.id AND c.user_id = $3
+      WHERE id = $2 AND cart_id = $3
     `,
-    values: [quantity, Number(itemId), user.id],
+    values: [quantity, Number(itemId), cartId],
   };
 
   const res = await pool.query(query);
@@ -40,19 +39,18 @@ export async function PATCH(req: Request, ctx: RouteContext<'/api/cart/[itemId]'
 };
 
 export async function DELETE(req: Request, ctx: RouteContext<'/api/cart/[itemId]'>) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Du måste vara inloggad' }, { status: 401 });
+  const cartId = await resolveCartId();
+  if (cartId === null) return NextResponse.json({ error: 'Hittades inte' }, { status: 404 });
 
   const { itemId } = await ctx.params;
 
   const query = {
     name: 'delete-cart-item',
     text: `
-      DELETE FROM carts_products cp
-      USING cart c
-      WHERE cp.id = $1 AND cp.cart_id = c.id AND c.user_id = $2
+      DELETE FROM carts_products
+      WHERE id = $1 AND cart_id = $2
     `,
-    values: [Number(itemId), user.id],
+    values: [Number(itemId), cartId],
   };
 
   const res = await pool.query(query);
