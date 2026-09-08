@@ -60,7 +60,6 @@ export default async function AdminPage() {
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Order</th>
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Datum</th>
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Kund</th>
-                <th className="lp-eyebrow py-4 pr-6 text-muted">Leveransadress</th>
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Produkter</th>
                 <th className="lp-eyebrow py-4 text-right text-muted">Summa</th>
               </tr>
@@ -74,18 +73,13 @@ export default async function AdminPage() {
                   <td className="py-6 pr-6 text-sm text-muted">{formatDate(order.ordered_at)}</td>
 
                   <td className="py-6 pr-6 text-sm">
-                    {order.username ?? <span className="text-muted">Borttagen användare</span>}
-                    {order.email && (
-                      <span className="mt-1 block text-xs text-muted">{order.email}</span>
+                    {order.username ?? order.guest_name ?? <span className="text-muted">Okänd</span>}
+                    {!order.username && (
+                      <span className="mt-1 block text-[11px] uppercase tracking-[0.15em] text-accent">Gäst</span>
                     )}
-                  </td>
-
-                  <td className="py-6 pr-6 text-sm text-muted">
-                    {order.shipping_street}
-                    <span className="mt-1 block">
-                      {order.shipping_postal_code} {order.shipping_city}
-                    </span>
-                    <span className="block">{order.shipping_country}</span>
+                    {(order.email ?? order.guest_email) && (
+                      <span className="mt-1 block text-xs text-muted">{order.email ?? order.guest_email}</span>
+                    )}
                   </td>
 
                   <td className="py-6 pr-6 text-sm">

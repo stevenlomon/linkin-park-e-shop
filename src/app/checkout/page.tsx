@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCurrentUser } from '@/lib/auth';
@@ -13,11 +12,9 @@ function formatPrice(value: number) {
 
 export default async function CheckoutPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/');
-
   const items = await getCart();
 
-  if (!items || items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="lp-container pt-6 pb-16">
         <header className="mb-10 border-b border-line pb-8">
@@ -44,7 +41,7 @@ export default async function CheckoutPage() {
       <div className="grid gap-16 lg:grid-cols-[1fr_24rem]">
 
         <div>
-          <h2 className="lp-eyebrow mb-6 text-muted">Leveransuppgifter</h2>
+          <h2 className="lp-eyebrow mb-6 text-muted">Dina uppgifter</h2>
           <CheckoutForm user={user} />
         </div>
 
@@ -85,7 +82,7 @@ export default async function CheckoutPage() {
             <span className="text-lg font-bold">{formatPrice(total)} {currencyCode}</span>
           </div>
 
-          <p className="mt-3 text-xs text-muted">Frakt tillkommer inte i det här skolprojektet.</p>
+          <p className="mt-3 text-xs text-muted">Ingen frakt eller betalning i det här skolprojektet.</p>
         </aside>
 
       </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 const geistSans = Geist({
@@ -41,9 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="mt-24 border-t border-line bg-surface">
           <div className="lp-container-wide flex flex-col gap-4 py-10 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xl font-bold uppercase tracking-tight">Linkin Park</p>
-            <Link href="/about" className="text-xs text-muted underline-offset-4 transition-colors hover:text-bone hover:underline">
+            <span className="text-xs text-muted underline-offset-4 transition-colors">
               Skolprojekt av Steven Lomon Lennartsson · Systemutveckling FSU25D
-            </Link>
+            </span>
           </div>
         </footer>
       </body>

@@ -63,38 +63,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: "not ok", error: (err as Error).message }, { status: 500 });
   }
 };
-
-export async function PATCH(req: Request) {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Du måste vara inloggad' }, { status: 401 });
-    }
-
-    const { fname, lname, street, city, postalCode, country } = await req.json();
-
-    const clean = (value: unknown) =>
-      typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
-
-    const query = {
-      name: 'update-user-profile',
-      text: `
-        UPDATE "User"
-        SET fname = $1, lname = $2, street = $3, city = $4, postal_code = $5, country = $6
-        WHERE id = $7
-        RETURNING id, fname, lname, street, city, postal_code, country
-      `,
-      values: [
-        clean(fname), clean(lname), clean(street),
-        clean(city), clean(postalCode), clean(country),
-        user.id,
-      ],
-    };
-
-    const res = await pool.query(query);
-    return NextResponse.json({ success: 'ok', data: res.rows[0] });
-  } catch (err) {
-    console.error('Kunde inte uppdatera profilen:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-};

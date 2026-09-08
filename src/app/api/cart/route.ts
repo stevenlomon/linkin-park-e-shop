@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
 import { getOrCreateCartId } from '@/lib/cart';
 
 export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Du måste vara inloggad för att lägga till i varukorgen' }, { status: 401 });
-    }
-
     const body = await req.json();
     const { productId, quantity = 1} = body; // quantity har 1 som default
 
@@ -17,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ogiltig produkt eller antal' }, { status: 400 });
     }
 
-    const cartId = await getOrCreateCartId(user.id);
+    const cartId = await getOrCreateCartId();
 
     const query = {
       name: 'add-to-cart',
