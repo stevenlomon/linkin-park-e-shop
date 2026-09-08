@@ -16,8 +16,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const query = {
     name: 'fetch-current-user',
     text: `
-      SELECT u.id, u.username, u.email, u.role_id, r.name AS role_name,
-             u.fname, u.lname, u.street, u.city, u.postal_code, u.country
+      SELECT u.id, u.username, u.email, u.role_id, r.name AS role_name
       FROM "User" u
       JOIN role r ON u.role_id = r.id
       WHERE u.id = $1
