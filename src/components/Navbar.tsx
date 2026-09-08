@@ -3,9 +3,8 @@
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { getCart, getCartItemCount } from '@/lib/cart'
-import LoginForm from './navbar/LoginForm'
-import LogoutButton from './navbar/LogoutButton';
 import CartDropdown from './navbar/CartDropdown';
+import AccountDropdown from './navbar/AccountDropdown';
 
 // Butikens egen nav är versal och spärrad. Vi speglar strukturen med våra egna sidor
 const NAV_LINKS = [
@@ -50,23 +49,9 @@ export default async function Navbar() {
         </div>
 
         <div className="flex items-center gap-8 lg:shrink-0">
-          {user ? (
-            <>
-              <span className="lp-eyebrow text-muted">
-                Hej {user.role_name === 'admin' ? "Admin" : user.username}!
-              </span>
+          <CartDropdown items={cartItems} itemCount={cartItemCount} />
 
-              <CartDropdown items={cartItems} itemCount={cartItemCount} />
-
-              <LogoutButton />
-            </>
-          ) : (
-            <>
-              <LoginForm />
-
-              <CartDropdown items={cartItems} itemCount={cartItemCount} />
-            </>
-          )}
+          <AccountDropdown user={user} />
         </div>
 
       </div>
