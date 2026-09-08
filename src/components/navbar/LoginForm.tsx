@@ -55,10 +55,10 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
 
-        <div className="sm:w-40">
+        <div>
           <label htmlFor='username' className="lp-label">Användarnamn</label>
           <input
             id='username'
@@ -71,7 +71,7 @@ export default function LoginForm() {
           />
         </div>
 
-        <div className="sm:w-40">
+        <div>
           <label htmlFor='password' className="lp-label">Lösenord</label>
           {/* Jag är on and on med hur jag inte prioriterar säkerhet i detta projekt men denna ska iaf ha `type='password'` hahahah */}
           <input
@@ -85,13 +85,13 @@ export default function LoginForm() {
           />
         </div>
 
-        <button type='submit' disabled={isSubmitting} className="lp-btn-primary py-2.5">
+        <button type='submit' disabled={isSubmitting} className="lp-btn-primary w-full py-2.5">
           {isSubmitting ? 'Loggar in..' : 'Logga in'}
         </button>
       </div>
 
       {error && (
-        <p role='alert' className="text-xs text-danger sm:text-right">{error}</p>
+        <p role='alert' className="text-xs text-danger">{error}</p>
       )}
     </form>
   )
