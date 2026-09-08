@@ -6,13 +6,6 @@ export interface CurrentUser {
   // Dessa två är inte nullable i databasen längre och därmed inte `| null` här
   role_id: number;   // 1 är 'admin', 2 är 'customer'
   role_name: string;
-
-  fname: string | null;
-  lname: string | null;
-  street: string | null;
-  city: string | null;
-  postal_code: string | null;
-  country: string | null;
 }
 
 export interface Category {
@@ -86,17 +79,16 @@ export interface AdminOrder {
   ordered_at: Date;
   username: string | null;
   email: string | null;
-  shipping_street: string;
-  shipping_city: string;
-  shipping_postal_code: string;
-  shipping_country: string;
+  shipping_street: string | null;
+  shipping_city: string | null;
+  shipping_postal_code: string | null;
+  shipping_country: string | null;
   item_count: number;
   total: string;
   items: AdminOrderItem[];
+
+  // För att kunna gå igenom checkout flow som gäst!
+  guest_name: string | null;
+  guest_email: string | null;
 }
 
-export interface ProfileStats {
-  created_at: Date;
-  order_count: number;
-  total_spent: string;
-}
