@@ -4,12 +4,7 @@ import { pool } from './db';
 import { CartItem } from './types';
 import { getCurrentUser } from './auth';
 
-// Den här filen är den som är *by far* mest outside of my techinical capabilities i hela kodbasen. Öppen och ärlig med det.
-// I'd like to dissect och pick it apart efter deadline
-// `cache` har med memoization att göra. En sak jag once again vill göra en deep dive på efter deadline.
-// `export const getCartItemCount = cache(async (): Promise<number> => {` Har aldrig sett en funktion skriven på detta format
-// innan och nu helt plöstligt har vi en fil här med två stycken. Det blir verkligen "så länge det funkar" tillsvidare!
-
+// Cart använder nu cookie istället för user id
 export const GUEST_CART_COOKIE = 'linkin-park-guest-cart';
 
 export const resolveCartId = cache(async (): Promise<number | null> => {
