@@ -5,18 +5,14 @@ import { useRouter } from 'next/navigation'
 import { type CurrentUser } from '@/lib/types'
 
 interface CheckoutFormProps {
-  user: CurrentUser;
+  user: CurrentUser | null;
 }
 
 const SPINNER_MS = 3400;
 
 export default function CheckoutForm({ user }: CheckoutFormProps) {
-  const [fname, setFname] = useState(user.fname ?? '');
-  const [lname, setLname] = useState(user.lname ?? '');
-  const [street, setStreet] = useState(user.street ?? '');
-  const [city, setCity] = useState(user.city ?? '');
-  const [postalCode, setPostalCode] = useState(user.postal_code ?? '');
-  const [country, setCountry] = useState(user.country ?? 'Sverige');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState(user?.email ?? '');
 
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -32,7 +28,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fname, lname, street, city, postalCode, country }),
+        body: JSON.stringify({ name, email }),
       });
 
       if (!res.ok) {
@@ -68,50 +64,39 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor='fname' className="lp-label">Förnamn</label>
-            <input id='fname' type='text' value={fname} onChange={(e) => setFname(e.target.value)} autoComplete='given-name' className="lp-input" required />
-          </div>
-
-          <div>
-            <label htmlFor='lname' className="lp-label">Efternamn</label>
-            <input id='lname' type='text' value={lname} onChange={(e) => setLname(e.target.value)} autoComplete='family-name' className="lp-input" required />
-          </div>
+        <div>
+          <label htmlFor='name' className="lp-label">Namn</label>
+          <input
+            id='name'
+            type='text'
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete='name'
+            className="lp-input"
+            required
+          />
         </div>
 
         <div>
           <label htmlFor='email' className="lp-label">E-post</label>
-          <input id='email' type='email' value={user.email} readOnly disabled className="lp-input opacity-60" />
-          <p className="mt-2 text-xs text-muted">Din e-post ändras på profilsidan.</p>
-        </div>
-
-        <div>
-          <label htmlFor='street' className="lp-label">Gatuadress</label>
-          <input id='street' type='text' value={street} onChange={(e) => setStreet(e.target.value)} autoComplete='street-address' className="lp-input" required />
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor='postal-code' className="lp-label">Postnummer</label>
-            <input id='postal-code' type='text' value={postalCode} onChange={(e) => setPostalCode(e.target.value)} autoComplete='postal-code' className="lp-input" required />
-          </div>
-
-          <div>
-            <label htmlFor='city' className="lp-label">Ort</label>
-            <input id='city' type='text' value={city} onChange={(e) => setCity(e.target.value)} autoComplete='address-level2' className="lp-input" required />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor='country' className="lp-label">Land</label>
-          <input id='country' type='text' value={country} onChange={(e) => setCountry(e.target.value)} autoComplete='country-name' className="lp-input" required />
+          <input
+            id='email'
+            type='email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete='email'
+            className="lp-input"
+            required
+          />
+          <p className="mt-2 text-xs text-muted">
+            Din orderbekräftelse skulle skickas hit.
+          </p>
         </div>
 
         {error && <p role='alert' className="text-sm text-danger">{error}</p>}
 
-        <button type='submit' disabled={isProcessing} className="lp-btn-primary w-full">
-          {isProcessing ? 'Behandlar…' : 'Köp'}
+        <button type='submit' disabled={isProcessing} className="lp-btn-primary w-full sm:w-auto">
+          {isProcessing ? 'Behandlar…' : 'Slutför köp'}
         </button>
 
         <p className="text-xs text-muted">

@@ -1,24 +1,29 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { resolveCartId, GUEST_CART_COOKIE } from '@/lib/cart';
+import { cookies } from 'next/headers';
 
 // 100% skriven av Claude Code på deadline day
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Du måste vara inloggad' }, { status: 401 });
+
+  const { name, email } = await req.json();
+
+  if (typeof name !== 'string' || name.trim() === '') {
+    return NextResponse.json({ error: 'Namn måste fyllas i' }, { status: 400 });
   }
 
-  const { fname, lname, street, city, postalCode, country } = await req.json();
-
-  const fields = { fname, lname, street, city, postalCode, country };
-  for (const [key, value] of Object.entries(fields)) {
-    if (typeof value !== 'string' || value.trim() === '') {
-      return NextResponse.json({ error: `Fältet ${key} måste fyllas i` }, { status: 400 });
-    }
+  if (typeof email !== 'string' || !email.includes('@')) {
+    return NextResponse.json({ error: 'En giltig e-postadress krävs' }, { status: 400 });
   }
 
-  // Transactions!! Dessa känner jag igen, har en hel del i Florilegium! Fixa en dedicated pool och kör sedan 'BEGIN' och 'COMMIT' 
+  const cartId = await resolveCartId();
+  if (cartId === null) {
+    return NextResponse.json({ error: 'Varukorgen är tom' }, { status: 400 });
+  }
+
+  // Transactions!! Dessa känner jag igen, har en hel del i Florilegium! Fixa en dedicated pool och kör sedan 'BEGIN' och 'COMMIT'
   // med 'ROLLBACK' så att endast *fulla kompletta* orders finns i databasen!
   const client = await pool.connect();
 
@@ -30,8 +35,8 @@ export async function POST(req: Request) {
        FROM cart c
        JOIN carts_products cp ON cp.cart_id = c.id
        JOIN product p ON p.id = cp.product_id
-       WHERE c.user_id = $1`,
-      [user.id]
+       WHERE c.id = $1`,
+      [cartId]
     );
 
     if (cartRes.rowCount === 0) {
@@ -39,18 +44,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Varukorgen är tom' }, { status: 400 });
     }
 
-    await client.query(
-      `UPDATE "User"
-       SET fname = $1, lname = $2, street = $3, city = $4, postal_code = $5, country = $6
-       WHERE id = $7`,
-      [fname.trim(), lname.trim(), street.trim(), city.trim(), postalCode.trim(), country.trim(), user.id]
-    );
-
     const orderRes = await client.query<{ id: number }>(
-      `INSERT INTO "Order" (user_id, shipping_street, shipping_city, shipping_postal_code, shipping_country)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO "Order" (user_id, guest_name, guest_email)
+       VALUES ($1, $2, $3)
        RETURNING id`,
-      [user.id, street.trim(), city.trim(), postalCode.trim(), country.trim()]
+      [user?.id ?? null, name.trim(), email.trim()]
     );
 
     const orderId = orderRes.rows[0].id;
@@ -63,13 +61,17 @@ export async function POST(req: Request) {
       );
     }
 
-    await client.query(
-      `DELETE FROM carts_products
-       WHERE cart_id = (SELECT id FROM cart WHERE user_id = $1)`,
-      [user.id]
-    );
+    await client.query('DELETE FROM carts_products WHERE cart_id = $1', [cartId]);
+
+    if (!user) {
+      await client.query('DELETE FROM cart WHERE id = $1', [cartId]);
+    }
 
     await client.query('COMMIT');
+
+    if (!user) {
+      (await cookies()).delete(GUEST_CART_COOKIE);
+    }
 
     return NextResponse.json({ success: 'ok', data: { orderId } }, { status: 201 });
   } catch (err) {
