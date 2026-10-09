@@ -22,10 +22,21 @@ export async function getExchangeRates(base: string = 'SEK', symbols: string[] =
   const response = await fetch(url, {
     next: { revalidate: 3600 }, // Cache:a datan i en timme!
   });
+
+  if (!response.ok) {
+    throw new Error(
+      `CurrencyAdapterError: Frankfurter API returned status ${response.status} (${response.statusText})`
+    );
+  }
+
+  const data: FrankFurterLatestResponse = await response.json();
   
   return {
-    base: "base",
-    rates: {"rates": 1},
-    date: "date"
-  }
+    base: data.base,
+    rates: {
+      [data.base]: 1, // Base rate som jämförelse
+      ...data.rates,
+    },
+    date: data.date,
+  };
 }
