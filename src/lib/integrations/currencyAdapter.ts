@@ -1,4 +1,4 @@
-const FRANKFURTER_BASE_URL = "https://frankfurter.dev/v1/";
+const FRANKFURTER_BASE_URL = "https://frankfurter.dev/v1"; // Inge sne streck här!
 
 // Detta är vad vi får direkt från Frankfurter
 interface FrankFurterLatestResponse {
@@ -16,6 +16,13 @@ export interface ExchangeRateResults {
 }
 
 export async function getExchangeRates(base: string = 'SEK', symbols: string[] = ['EUR', 'USD', 'GBP']): Promise<ExchangeRateResults> {
+  const symbolsParam = symbols.join(',');
+  const url = `${FRANKFURTER_BASE_URL}/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(symbolsParam)}`;
+
+  const response = await fetch(url, {
+    next: { revalidate: 3600 }, // Cache:a datan i en timme!
+  });
+  
   return {
     base: "base",
     rates: {"rates": 1},
