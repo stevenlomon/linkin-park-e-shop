@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { getCart, getCartItemCount } from '@/lib/cart'
+import { getExchangeRates } from '@/lib/integrations/currencyAdapter';
 import CartDropdown from './navbar/CartDropdown';
 import AccountDropdown from './navbar/AccountDropdown';
 
@@ -17,6 +18,9 @@ export default async function Navbar() {
   // Vi skaffar värdet på antalet items i kundkorgen på precis samma sätt som user!
   const cartItemCount = await getCartItemCount();
   const cartItems = await getCart();
+
+  // Nu kan vi även använda vår adapter för att få rates, åter igen direkt i denna server component!
+  const rates = await getExchangeRates();
 
   return (
     <header className="border-b border-line bg-surface">
