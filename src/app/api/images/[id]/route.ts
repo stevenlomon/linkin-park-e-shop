@@ -3,6 +3,7 @@ import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 // Oxå 100% skriven av Claude nu på deadline day, oxå 100% värd att dissect i lugn och ro efter deadline
+// Image relaterade filer blir fullt dissected i och med moln lagrings integration i Labb 4!
 export async function GET(_req: Request, { params }: RouteContext<'/api/images/[id]'>) {
   try {
     const { id } = await params;

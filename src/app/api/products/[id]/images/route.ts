@@ -6,6 +6,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const MAX_SIZE_BYTES = 4 * 1024 * 1024;
 
 // 100% skriven av Claude nu på deadline day. Värd att dissect i lugn och ro efter deadline
+// Image relaterade filer blir fullt dissected i och med moln lagrings integration i Labb 4!
 export async function POST(req: Request, { params }: RouteContext<'/api/products/[id]/images'>) {
   try {
     const user = await getCurrentUser();

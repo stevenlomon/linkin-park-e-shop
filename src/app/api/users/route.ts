@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
 
-export async function GET(req: Request) {
+export async function GET() {
   // GET endpoint kod kommer leva här
 };
 
@@ -14,7 +13,7 @@ export async function POST(req: Request) {
     // En User i vår databas vill ha role_id, email, password (se kommentar i working-log.md), och username
     // Vår Postgres instance tar hand om id och created_at
     // fname, lname, street, city etc etc fylls antingen i av användare via UI i antingen /profile eller i och med checkout tänker jag
-    let { role_id, email, password, username } = body;
+    const { role_id, email, password, username } = body;
 
     if (!role_id || !email || !password || !username) {
       return NextResponse.json({ error: "Missing required User fields" }, { status: 400 });

@@ -10,8 +10,20 @@ import AddToCartButton from '@/components/products/AddToCartButton';
 
 export const dynamic = 'force-dynamic';
 
-
-// Kommer 100% göra en deep dive kring `PageProps<AppRoute>` vs `RouteContext<AppRouteHandlerRoute>` i lugn och ro efter deadline
+// Tech debt clean-up; let's unpack `PageProps<AppRoute>` vs `RouteContext<AppRouteHandlerRoute>`!
+// Super simplifierat:
+// `PageProps<AppRoute>` -> används i page.tsx filer.
+// `RouteContext<AppRouteHandlerRoute>` -> används i route.ts filer. 
+// Dessa är två generated helpers som Next.js erbjuder oss. What trips me up är att jag aldrig sett dem. Jag  är van med 
+// t.ex. `export default async function DetailedViewPage({ params }: { params: Promise<{ id: string }> }) {` (från Florilegium). 
+// Om jag förstår rätt så ger `PageProps<'/products/[id]'>` oss `{ params: Promise<{ id: string }> }` automatiskt. 
+// Med andra ord: `{ params }: PageProps<'/products/[id]'>` === `{ params }: { params: Promise<{ id: string }> }`
+// För RouteContext: `req: Request, ctx: RouteContext<'/api/cart/[itemId]'>` === `req: Request, ctx: { params: Promise<{ itemId: string }> }`
+// I Florilegium har jag inga dynamic segments med [id] i någon av mina routes och därför jag endast req behövs som parameter i
+// de Route Handlers. Här har vi `/api/cart/[itemId]/route.ts` vilket är stora skillnaden
+// Tror jag föredrar att skriva ut allting explicitly som jag gjort i Florilegium av ren vana.
+// Fördelen med att använda Next.js's generated helpers är att de automatiskt synkar ifall vi döper om vår route. 
+// Men nu vet jag! Jag får låta allt detta marinera och göra det arkitektuella valet nästa projekt jag bygger i Next.js
 export default async function DetailedProductPage({ params }: PageProps<'/products/[id]'>) {
   const user = await getCurrentUser();
   const { id } = await params; // Simpelt sätt att få en variabel från vår URL!
