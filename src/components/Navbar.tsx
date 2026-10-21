@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { getCart, getCartItemCount } from '@/lib/cart'
 import { getExchangeRates } from '@/lib/integrations/currencyAdapter';
+import { getSelectedCurrency } from '@/lib/currencies';
 import CartDropdown from './navbar/CartDropdown';
 import AccountDropdown from './navbar/AccountDropdown';
+import CurrencyPicker from './navbar/CurrencyPicker';
 
 // Butikens egen nav är versal och spärrad. Vi speglar strukturen med våra egna sidor
 const NAV_LINKS = [
@@ -21,6 +23,7 @@ export default async function Navbar() {
 
   // Nu kan vi även använda vår adapter för att få rates, åter igen direkt i denna server component!
   const rates = await getExchangeRates();
+  const selectedCurrency = await getSelectedCurrency();
 
   return (
     <header className="border-b border-line bg-surface">
@@ -56,6 +59,10 @@ export default async function Navbar() {
           <CartDropdown items={cartItems} itemCount={cartItemCount} />
 
           <AccountDropdown user={user} />
+
+          {/* Vår currencies prop vill ha en array med strings. `rates.rates` är ett objekt. `Object.keys` 
+              tar endast nycklarna från objektet */}
+          <CurrencyPicker currencies={Object.keys(rates.rates)} activeCurrency={selectedCurrency} />
         </div>
 
       </div>
