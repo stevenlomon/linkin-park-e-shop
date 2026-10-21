@@ -1,12 +1,17 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { type ProductListItem } from '@/lib/types'
+import { convertPrice } from '@/lib/currencies'
 
 interface ProductCardProps {
   product: ProductListItem;
+
+  // Två nya props för vår nya dynamiska valuta omväxling
+  rates: Record<string, number>;
+  selectedCurrency: string;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, rates, selectedCurrency }: ProductCardProps) {
   return (
     <Link href={`/products/${product.id}`} className="group block">
 
@@ -33,7 +38,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h2>
         <p className="text-sm text-muted">
-          {Number(product.current_price).toFixed(2).replace('.', ',')} {product.currency_code ?? 'SEK'}
+          {/* Här använder vi vår convertPrice helper function! */}
+          {convertPrice(product.current_price, rates, selectedCurrency).toFixed(2).replace('.', ',')} {selectedCurrency}
         </p>
       </div>
     </Link>

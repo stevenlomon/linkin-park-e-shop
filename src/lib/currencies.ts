@@ -27,3 +27,14 @@ export async function getSelectedCurrency(): Promise<string> {
   // I.e. om vi har ett värde som finns i vår allow list från cookie, returnera. Annars 'SEK'
   return raw && ALLOWED_CURRENCIES.includes(raw) ? raw : 'SEK';
 }
+
+// Helper funktion för att visa priser i andra valutor i bl.a. ProductCard. Alla priser i databasen lagras i SEK, och rates från 
+// Frankfurter är relativa till SEK, så konverteringen är alltid SEK → vald valuta.
+// Tar `string | number` eftersom pg returnerar numeric som string
+export function convertPrice(sekPrice: string | number, rates: Record<string, number>, targetCurrency: string): number {
+  // Om vi får priset som en sträng, konvertera till Number först
+  const amount = typeof sekPrice === 'string' ? Number(sekPrice) : sekPrice;
+
+  const rate = rates[targetCurrency] ?? 1;
+  return amount * rate;
+}

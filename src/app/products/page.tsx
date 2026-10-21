@@ -2,6 +2,8 @@ import { getAllActiveProducts } from '@/lib/products'
 import { getAllLeafCategories, getAllParentCategories } from '@/lib/categories';
 import CategoryNav from '@/components/products/CategoryNav'
 import ProductCard from '@/components/products/ProductCard'
+import { getExchangeRates } from '@/lib/integrations/currencyAdapter';
+import { getSelectedCurrency } from '@/lib/currencies';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,10 +20,13 @@ export default async function AllProductsPage({ searchParams }: PageProps<'/prod
 
   // De tre hämtningarna är oberoende av varandra, så vi kör dem parallellt
   // istället för att vänta in dem en i taget
-  const [leafCategories, parentCategories, products] = await Promise.all([
+  // Ännu fler hämtningar nu som alla fortfarande kan köra parallellt!
+  const [leafCategories, parentCategories, products, rates, selectedCurrency] = await Promise.all([
     getAllLeafCategories(),
     getAllParentCategories(),
     getAllActiveProducts(activeCategoryId),
+    getExchangeRates(),
+    getSelectedCurrency(),
   ]);
 
   // Rubriken speglar filtret. Vi slår upp namnet i listan vi redan hämtat
@@ -45,7 +50,7 @@ export default async function AllProductsPage({ searchParams }: PageProps<'/prod
       ) : (
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 lg:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} rates={rates.rates} selectedCurrency={selectedCurrency} />
           ))}
         </div>
       )}
