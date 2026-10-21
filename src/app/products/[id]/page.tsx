@@ -4,32 +4,34 @@ import Image from 'next/image';
 import { getCurrentUser } from '@/lib/auth';
 import { getProductDetail } from '@/lib/products';
 import { getProductImage } from '@/lib/productImage';
+import { getExchangeRates } from '@/lib/integrations/currencyAdapter';
+import { getSelectedCurrency, convertPrice } from '@/lib/currencies';
 import AddToCartButton from '@/components/products/AddToCartButton';
 
 export const dynamic = 'force-dynamic';
 
-function formatPrice(value: string) {
-  return Number(value).toFixed(2).replace('.', ',');
-}
 
 // Kommer 100% göra en deep dive kring `PageProps<AppRoute>` vs `RouteContext<AppRouteHandlerRoute>` i lugn och ro efter deadline
 export default async function DetailedProductPage({ params }: PageProps<'/products/[id]'>) {
   const user = await getCurrentUser();
   const { id } = await params; // Simpelt sätt att få en variabel från vår URL!
   const productId = Number(id);
-
+  
   if (!Number.isInteger(productId)) notFound();
-
+  
   const product = await getProductDetail(productId);
   if (!product) notFound();
-
+  
   const isAdmin = user?.role_name === 'admin';
-
+  
   if (!product.is_active && !isAdmin) notFound();
-
+  
   const image = await getProductImage(productId);
-
-  const currencyCode = product.currency_code ?? 'SEK';
+  const [rates, selectedCurrency] = await Promise.all([
+    getExchangeRates(),
+    getSelectedCurrency(),
+  ]);
+  
   const isOnSale = Number(product.current_price) < Number(product.standard_price);
 
   return (
@@ -70,14 +72,15 @@ export default async function DetailedProductPage({ params }: PageProps<'/produc
 
           <h1 className="lp-heading mb-4">{product.name}</h1>
 
+          {/* Nu med vår dynamiska valuta omväxling integrerad! */}
           <div className="mb-8 flex items-baseline gap-3">
             <p className="text-xl">
-              {formatPrice(product.current_price)} {currencyCode}
+              {convertPrice(product.current_price, rates.rates, selectedCurrency).toFixed(2).replace('.', ',')} {selectedCurrency}
             </p>
 
             {isOnSale && (
               <p className="text-sm text-muted line-through">
-                {formatPrice(product.standard_price)} {currencyCode}
+                {convertPrice(product.standard_price, rates.rates, selectedCurrency).toFixed(2).replace('.', ',')} {selectedCurrency}
               </p>
             )}
           </div>
