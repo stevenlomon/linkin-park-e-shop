@@ -1,4 +1,4 @@
-const FRANKFURTER_BASE_URL = "https://frankfurter.dev/v1"; // Inge sne streck här!
+const FRANKFURTER_BASE_URL = "https://api.frankfurter.dev/v1"; // Inge sne streck här!
 
 // Detta är vad vi får direkt från Frankfurter
 interface FrankFurterLatestResponse {
