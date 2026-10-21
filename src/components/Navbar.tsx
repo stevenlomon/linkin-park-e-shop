@@ -56,13 +56,13 @@ export default async function Navbar() {
         </div>
 
         <div className="flex items-center gap-8 lg:shrink-0">
-          <CartDropdown items={cartItems} itemCount={cartItemCount} />
-
-          <AccountDropdown user={user} />
-
           {/* Vår currencies prop vill ha en array med strings. `rates.rates` är ett objekt. `Object.keys` 
               tar endast nycklarna från objektet */}
           <CurrencyPicker currencies={Object.keys(rates.rates)} activeCurrency={selectedCurrency} />
+
+          <CartDropdown items={cartItems} itemCount={cartItemCount} />
+
+          <AccountDropdown user={user} />
         </div>
 
       </div>
