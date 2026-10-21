@@ -60,7 +60,7 @@ export default async function Navbar() {
               tar endast nycklarna från objektet */}
           <CurrencyPicker currencies={Object.keys(rates.rates)} activeCurrency={selectedCurrency} />
 
-          <CartDropdown items={cartItems} itemCount={cartItemCount} />
+          <CartDropdown items={cartItems} itemCount={cartItemCount} rates={rates.rates} selectedCurrency={selectedCurrency} />
 
           <AccountDropdown user={user} />
         </div>

@@ -10,13 +10,17 @@ import { type CartItem } from '@/lib/types'
 interface CartDropdownProps {
   items: CartItem[];
   itemCount: number;
+
+  // För vår nya dynamiska valuta omväxling, även i CartDropdown!
+  rates: Record<string, number>;
+  selectedCurrency: string;
 }
 
 function formatPrice(value: number) {
   return value.toFixed(2).replace('.', ',');
 }
 
-export default function CartDropdown({ items, itemCount }: CartDropdownProps) {
+export default function CartDropdown({ items, itemCount, rates, selectedCurrency }: CartDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
 
@@ -56,11 +60,11 @@ export default function CartDropdown({ items, itemCount }: CartDropdownProps) {
     }
   }
 
+  // Denna summering tar nu till hänsyn valuta
   const total = items.reduce(
-    (sum, item) => sum + Number(item.current_price) * item.quantity,
-    0
+    (sum, item) => sum + Number(item.current_price) * item.quantity * (rates[selectedCurrency] ?? 1),
+    0,
   );
-  const currencyCode = items[0]?.currency_code ?? 'SEK';
 
   return (
     <div ref={containerRef} className="relative">
@@ -129,8 +133,9 @@ export default function CartDropdown({ items, itemCount }: CartDropdownProps) {
                         {item.name}
                       </Link>
 
+                      {/* Nu med dynamisk valuta omväxling integrerad! */}
                       <p className="mt-1 text-xs text-muted">
-                        {item.quantity} × {formatPrice(Number(item.current_price))} {item.currency_code ?? 'SEK'}
+                        {item.quantity} × {formatPrice(Number(item.current_price) * (rates[selectedCurrency] ?? 1))} {selectedCurrency}
                       </p>
 
                       <button
@@ -143,8 +148,9 @@ export default function CartDropdown({ items, itemCount }: CartDropdownProps) {
                       </button>
                     </div>
 
+                    {/* Även denna... */}
                     <p className="shrink-0 text-xs">
-                      {formatPrice(Number(item.current_price) * item.quantity)}
+                      {formatPrice(Number(item.current_price) * item.quantity * (rates[selectedCurrency] ?? 1))}
                     </p>
                   </li>
                 ))}
@@ -152,8 +158,10 @@ export default function CartDropdown({ items, itemCount }: CartDropdownProps) {
 
               <div className="flex items-baseline justify-between border-t border-line pt-4">
                 <span className="lp-eyebrow text-muted">Totalt</span>
+
+                {/* ...och denna använder nu selectedCurrency */}
                 <span className="text-sm font-bold">
-                  {formatPrice(total)} {currencyCode}
+                  {formatPrice(total)} {selectedCurrency}
                 </span>
               </div>
 
