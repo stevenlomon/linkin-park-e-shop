@@ -37,13 +37,13 @@ export async function POST(req: Request) {
 
     // En Product i vår databas vill ha name, description, standard_price, current_price, currency_id, category_id, 
     // Vår Postgres instance tar hand om id, is_active (default till true), och last_updated_at
-    let { name, description, standard_price, current_price, currency_id, category_id } = body;
+    const { name, description: rawDescription, standard_price, current_price, currency_id, category_id } = body;
 
     if (!name || standard_price == null || current_price == null || !currency_id || !category_id) {
       return NextResponse.json({ error: "Missing required Product fields" }, { status: 400 });
     }
 
-    description = description ?? '';
+    const description = rawDescription ?? '';
     console.log(`Received the following Product payload: name: ${name}, description: ${description}, standard_price: ${standard_price}, current_price: ${current_price}, currency_id: ${currency_id}, category_id: ${category_id}`);
 
     // Input data validation
