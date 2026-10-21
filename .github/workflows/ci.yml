@@ -29,8 +29,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type Check (TypeScript)
-        run: npx tsc --noEmit
+      # Detta steg kräver types som finns i .next/types. Dessa genereras automatiskt vid `pnpm run build` vilken
+      # kommer köra `next build`. Så det steget inkluderar redan type checking så vi kan säkert skippa detta steg
+      # som just nu bara ger ci errors.
+      # - name: Type Check (TypeScript)
+      #   run: npx tsc --noEmit
 
       - name: Lint Code
         run: pnpm run lint
