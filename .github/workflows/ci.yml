@@ -27,7 +27,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile # Ekvivalent till `npm ci` (clean install): radera `node_modules` helt och installera fresh från lockfile
 
       # Detta steg kräver types som finns i .next/types. Dessa genereras automatiskt vid `pnpm run build` vilken
       # kommer köra `next build`. Så det steget inkluderar redan type checking så vi kan säkert skippa detta steg
