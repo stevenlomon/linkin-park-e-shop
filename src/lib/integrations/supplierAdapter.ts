@@ -25,3 +25,21 @@ export async function fetchCSV(): Promise<ArrayBuffer> {
   // datan blir till UTF-8, först genom arrayBuffer() för att få det till raw bytes och sedan decode med TextDecoder()
   return response.arrayBuffer();
 }
+
+// I och med att den XML data vi får från leverantör API:t har `encoding="UTF-8"` deklarerat i sin header blir inte 
+// encoding och decoding ett problem! Därför kan vi köra .text() direkt och behöver inte .arrayBuffer()
+export async function fetchXML(): Promise<string> {
+  const url = `${SUPPLIER_BASE_URL}/products.xml?bransch=linkinpark`;
+
+  const response = await fetch(url, {
+    headers: { "X-Api-Key": getApiKey() },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `SupplierAdapterError: XML endpoint returned ${response.status} (${response.statusText})`
+    );
+  }
+
+  return response.text();
+}
