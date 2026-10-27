@@ -22,3 +22,26 @@ const xmlParser = new XMLParser({
   // objekt och inte bara ett enda objekt 
   isArray: (name) => name === 'produkt' || name === 'variant', 
 });
+
+// Ta hela vår råa XML sträng och gör om till en array av object av data shape SupplierProduct 
+export function parseXML(text: string): SupplierProduct[] {
+  // Anledningen till att denna nesting existerer är för att det är var vår XML parsin ger oss; det går inte att ändra
+  const doc: { katalog: { produkt: XmlProduct[] } } = xmlParser.parse(text);
+
+  return doc.katalog.produkt.map((p) => ({
+    artNr: p['@_artNr'],                                       // XML-attribut (artNr="LEV-1001") får prefix @_ 
+    name: p.benamning,
+    category: p.kategori,
+    price: parseDecimal(p.pris['#text']),                      // #text behövs för att <pris> har ett attribut (valuta)
+    stock: p.lagersaldo === '' ? null : Number(p.lagersaldo),
+    variants: p.varianter?.variant ?? [],
+    updatedAt: p.uppdaterad,
+  }));
+}
+
+function parseDecimal(value: string | number): number | null {
+  const text = String(value);
+  const cleaned = text.replace(',', '.');
+  const num = Number(cleaned);
+  return Number.isNaN(num) ? null : num;
+}
