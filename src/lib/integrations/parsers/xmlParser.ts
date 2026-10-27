@@ -13,3 +13,12 @@ type XmlProduct = {
   varianter?: { variant: string[] };
   uppdaterad: string;
 };
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  parseTagValue: true, // Auto-konvertera number och boolean; t.ex. `<lagersaldo>0</lagersaldo>` till 0 och inte "0"
+
+  // Denna är superviktig när man jobbar med XML data och flera objekt! Det är denna som ser till att vi får en array med
+  // objekt och inte bara ett enda objekt 
+  isArray: (name) => name === 'produkt' || name === 'variant', 
+});
