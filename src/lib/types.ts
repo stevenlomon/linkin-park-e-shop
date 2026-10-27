@@ -33,6 +33,9 @@ export interface Product {
   currency_id: number | null;
   category_id: number | null;
   is_active: boolean;
+  supplier_sku: string | null; // en leverantörs artNr, t.ex. "LEV-1001"
+  stock: number | null;        // null -> okänt, 0 = out of stock
+  variants: string[] | null;   // t.ex. ["S", "M", "L", "XL"]
 }
 
 export interface CartItem {
