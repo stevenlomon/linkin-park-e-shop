@@ -30,6 +30,9 @@ export default async function AdminPage() {
           <p className="lp-eyebrow mb-3 text-accent">Admin</p>
           <h1 className="lp-heading">Ordrar</h1>
         </div>
+        <a href="/admin/import" className="text-sm font-bold uppercase tracking-widest text-accent hover:text-bone transition-colors">
+          Importera produkter →
+        </a>
       </header>
 
       <div className="mb-12 grid gap-px bg-line sm:grid-cols-3">
