@@ -9,7 +9,26 @@ export default function ImportForm() {
   const [error, setError] = useState<string | null>(null);
 
   async function handleImport(format: 'csv' | 'xml') {
-    // Kod ska skrivas här
+    setLoading(true);
+    setError(null);
+    setReport(null);
+
+    try {
+      const res = await fetch(`/api/import?format=${format}`, { // Query parameter eftersom vi valde det över JSON body!
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        throw new Error(`Import failed with status ${res.status}`);
+      }
+
+      const data: ImportReport = await res.json();
+      setReport(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Något gick fel');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
