@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-// import ImportForm from '@/components/admin/ImportForm'; Skapas i nästa commit
+import ImportForm from '@/components/admin/ImportForm';
 
 // Denna sida cache:as aldrig! Vi behöver att den renderar fräsch vid varje request
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export default async function ImportPage() {
         </div>
       </header>
 
-      {/* <ImportForm /> */}
+      <ImportForm />
     </div>
   );
 }
