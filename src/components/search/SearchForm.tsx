@@ -28,7 +28,34 @@ export default function SearchForm() {
   const [currentPage, setCurrentPage] = useState(1);
 
   async function handleSearch(page = 1) {
-    // Kod ska skrivas här
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // GET fetch med våra tre query params. Tillbaka till konversationen om query params VS JSON body vilket
+      // jag är mer van med; search är textbooks use case för query params och GET kan inte ha en body!
+      // Vi kör alltid med pageSize 12. Vi skulle kunna bygga in att man kan ändra detta i UI:n men
+      // vi håller det simpelt for now med statiskt 12 page size och fungerande pagination
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&page=${page}&pageSize=12`);
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Sökningen misslyckades');
+      }
+
+      const data = await res.json();
+      setProducts(data.products);
+      setMeta(data.meta);
+      setCurrentPage(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Något gick fel');
+      setProducts([]);
+      setMeta(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -56,7 +83,7 @@ export default function SearchForm() {
 
       {meta && (
         <p className="lp-eyebrow mb-6 text-muted">
-          {meta.totalHits} träffar för &quot;{query}&quot;
+          {meta.totalHits} träffar för "{query}"
         </p>
       )}
 
