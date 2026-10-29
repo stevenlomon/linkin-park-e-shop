@@ -1,4 +1,4 @@
-// import SearchForm from '@/components/search/SearchForm'; Skapas i nästa commit
+import SearchForm from '@/components/search/SearchForm';
 
 export default function SearchPage() {
   return (
@@ -7,7 +7,7 @@ export default function SearchPage() {
         <h1 className="lp-heading">Sök produkter</h1>
       </header>
 
-      {/* <SearchForm /> */}
+      <SearchForm />
     </div>
   );
 }
