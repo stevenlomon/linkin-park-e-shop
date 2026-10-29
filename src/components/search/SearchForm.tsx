@@ -20,7 +20,8 @@ interface SearchMeta {
 }
 
 export default function SearchForm() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState('');                 // Håller det som står just nu i search fältet
+  const [searchedQuery, setSearchedQuery] = useState(''); // Håller det som visas i vår UI
   const [products, setProducts] = useState<SearchProduct[]>([]);
   const [meta, setMeta] = useState<SearchMeta | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,6 +50,7 @@ export default function SearchForm() {
       setProducts(data.products);
       setMeta(data.meta);
       setCurrentPage(page);
+      setSearchedQuery(query); // Spara queries som faktiskt används för att söka
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Något gick fel');
       setProducts([]);
@@ -83,7 +85,9 @@ export default function SearchForm() {
 
       {meta && (
         <p className="lp-eyebrow mb-6 text-muted">
-          {meta.totalHits} träffar för "{query}"
+          {/* Genom att använda `searchedQuery` här istället för `query` får vi bättre UX. Känns konstigt när sökrutan och UI
+              är i sync men nu är de decoupled */}
+          {meta.totalHits} träffar för "{searchedQuery}"
         </p>
       )}
 
