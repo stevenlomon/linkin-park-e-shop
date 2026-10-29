@@ -87,7 +87,7 @@ export default function SearchForm() {
         <p className="lp-eyebrow mb-6 text-muted">
           {/* Genom att använda `searchedQuery` här istället för `query` får vi bättre UX. Känns konstigt när sökrutan och UI
               är i sync men nu är de decoupled */}
-          {meta.totalHits} träffar för "{searchedQuery}"
+          {meta.totalHits} träffar för &ldquo;{searchedQuery}&rdquo;
         </p>
       )}
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { indexProducts, removeProduct, type AlgoliaProduct } from '@/lib/integrations/search/algoliaAdapter';
+import { indexProducts, removeProduct } from '@/lib/integrations/search/algoliaAdapter';
 
 export async function PATCH(req: Request, { params }: RouteContext<'/api/products/[id]'>) {
   try {
