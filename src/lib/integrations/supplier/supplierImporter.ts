@@ -6,6 +6,7 @@
 
 import { pool } from '@/lib/db';
 import type { SupplierProduct, ImportReport } from './parsers/types';
+import { indexProducts, type AlgoliaProduct } from '../search/algoliaAdapter';
 
 // Största produkt design valet: vi fokuserar endast på "parents categories", inte "leaf categories" alls
 // Detta dokumenteras i mer detalj i README
@@ -21,7 +22,11 @@ export async function importProducts(products: SupplierProduct[]): Promise<Impor
     created: 0,
     updated: 0,
     skipped: [],
+    searchIndexed: false, // Vår nya boolean i samband med Algolia synk!
   };
+
+  // NEW: Array att hålla de produkter som ska indexeras i Algolia!
+  const productsToIndex: AlgoliaProduct[] = [];
 
   for (const product of products) {
     // Det främsta vi behöver validera här är pris och kategori. En produkt utan pris kan inte säljas och
@@ -40,6 +45,7 @@ export async function importProducts(products: SupplierProduct[]): Promise<Impor
 
     // Upsert in i vår products table i databasen!
     // Avsiktligt uppdaterar vi endast current_price, inte standard_price
+    // NEW: Vi returnerar nu även `id` för att kunna identifiera produkten i Algolia
     const result = await pool.query({
       name: 'upsert-supplier-product',
       text: `
@@ -53,7 +59,7 @@ export async function importProducts(products: SupplierProduct[]): Promise<Impor
               stock = EXCLUDED.stock,
               variants = EXCLUDED.variants,
               last_updated_at = CURRENT_TIMESTAMP
-        RETURNING (xmax = 0) AS inserted -- Tydligen är detta ett Postgres trick. xmax är en intern system kolumn och kan hjälpa oss skilja created och updated. När den är 0 lades raden nyligen in, när den inte är 0 uppdateras den!
+        RETURNING id, (xmax = 0) AS inserted -- Tydligen är detta ett Postgres trick. xmax är en intern system kolumn och kan hjälpa oss skilja created och updated. När den är 0 lades raden nyligen in, när den inte är 0 uppdateras den!
       `,
       values: [
         product.name,
@@ -70,6 +76,30 @@ export async function importProducts(products: SupplierProduct[]): Promise<Impor
       report.created++;
     } else {
       report.updated++;
+    }
+
+    // NEW: Här nu, fortfarande i for-loopen, pushar vi till Algolia index array:en
+    productsToIndex.push({
+      objectID: product.artNr,
+      id: result.rows[0].id,
+      name: product.name,
+      current_price: product.price!,
+      category_id: categoryId,
+      stock: product.stock ?? 0,
+      variants: product.variants.length > 0 ? product.variants : null,
+    });
+  }
+
+  // NEW: Och nu, innan vi returnerar vår rapport, försöker vi indexera och synka med Algolia
+  // Vår databas är source of truth, Algolia är en kopia för sökning
+  // Om Algolia misslyckas sparas produkterna ändå och admin får veta att sökindexet inte uppdaterats
+  if (productsToIndex.length > 0) {
+    try {
+      await indexProducts(productsToIndex);
+      report.searchIndexed = true;
+    } catch (err) {
+      console.error('Algolia indexing failed:', err);
+      report.searchIndexed = false;
     }
   }
 

@@ -12,6 +12,7 @@ import CurrencyPicker from './navbar/CurrencyPicker';
 // Butikens egen nav är versal och spärrad. Vi speglar strukturen med våra egna sidor
 const NAV_LINKS = [
   { href: '/products', label: 'Produkter' },
+  { href: '/search', label: 'Sök' }, // Istället för en dedikerad sökbar på sidan for now. För enkelhetens skull
 ];
 
 export default async function Navbar() {

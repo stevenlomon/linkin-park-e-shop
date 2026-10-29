@@ -16,4 +16,7 @@ export type ImportReport = {
   created: number;
   updated: number;
   skipped: { artNr: string; reason: string }[];
+
+  // NEW: Indexerades produkten i Algolia?
+  searchIndexed?: boolean;
 };

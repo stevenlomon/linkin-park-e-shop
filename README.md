@@ -17,3 +17,25 @@ Möjliga förbättringar:
 
 - Manuell tilldelning av underkategori via admin-UI efter import
 - Utökat leverantörs-API med data för underkategori
+
+## Sökintegration med Algolia (Issue #15)
+
+Produkter indexeras i Algolia vid leverantörsimport och hålls synkade vid admin-redigering. Sökfunktion nås via `/search` i navbaren.
+
+### Designbeslut: ingen DELETE-route
+
+Vår app har ingen `DELETE /api/products/:id`-endpoint. Istället avaktiveras produkter via `is_active = false` genom PATCH-endpointen. Vid avaktivering tas produkten bort från Algolias sökindex (`removeProduct`), vid återaktivering indexeras den på nytt. Effekten är densamma som delete ur användarens perspektiv. Produkten försvinner från sök men datan finns kvar i databasen.
+
+### Designbeslut: bara importerade produkter i sökindex
+
+Endast produkter med `supplier_sku` (dvs. de som kommit via leverantörsimport) indexeras i Algolia. Manuellt skapade produkter via `/products/add` saknar SKU och hamnar därför inte i sökindexet.
+
+### Designbeslut: inga bilder i sökresultat
+
+Algolia-indexet lagrar inte `image_id`. Sökresultat visar en "Ingen bild"-placeholder och länkar till produktdetaljsidan där bilder finns. Detta håller indexet light och undviker att behöva synka bildändringar till Algolia.
+
+Möjliga förbättringar:
+
+- Valbar pageSize i sök-UI:n (API:t stödjer redan 1–50, frontend skickar just nu alltid 12)
+- Indexera manuellt skapade produkter (kräver att en objectID-strategi bestäms)
+- Lägga till `image_id` i Algolia-indexet för att visa bilder i sökresultat
