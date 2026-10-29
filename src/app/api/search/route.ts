@@ -17,6 +17,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   // Vårt validerings steg. safeParse ger antingen "success" eller "error"
+  // `Object.fromEntries(searchParams)` konverterar URLSearchParams så att zod kan parse:a det
   const result = SearchQuery.safeParse(Object.fromEntries(searchParams));
 
   if (!result.success) {
@@ -29,4 +30,32 @@ export async function GET(req: Request) {
   }
 
   const { q, page, pageSize } = result.data;
+
+  try {
+    const searchResult = await searchProducts(q, page, pageSize);
+
+    // Vi svarar på shoppens format, inte på Algolias. Dvs vårt interna id, inte Algolias objectID
+    return NextResponse.json({
+      products: searchResult.hits.map((hit) => ({
+        id: hit.id,
+        name: hit.name,
+        current_price: hit.current_price,
+        category_id: hit.category_id,
+        stock: hit.stock,
+        variants: hit.variants,
+      })),
+      meta: {
+        page: searchResult.page,
+        pageSize,
+        totalHits: searchResult.totalHits,
+        totalPages: searchResult.totalPages,
+      },
+    });
+  } catch (err) {
+    console.error('Search failed:', err);
+    return NextResponse.json(
+      { error: 'Sökningen misslyckades' },
+      { status: 500 }
+    );
+  }
 }
