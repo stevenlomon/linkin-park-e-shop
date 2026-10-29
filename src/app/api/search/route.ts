@@ -14,5 +14,19 @@ const SearchQuery = z.object({
 });
 
 export async function GET(req: Request) {
-  // Kod ska skrivas här
+  const { searchParams } = new URL(req.url);
+
+  // Vårt validerings steg. safeParse ger antingen "success" eller "error"
+  const result = SearchQuery.safeParse(Object.fromEntries(searchParams));
+
+  if (!result.success) {
+    return NextResponse.json(
+      // Det finns även `z.treeifyError()` om jag förstår rätt för mer struktur i error objektet om jag
+      // förstår rätt? Men vi tjänar inte riktigt nånting på det här så vi kör på med `z.prettifyError()`
+      { error: 'Ogiltiga sökparametrar', details: z.prettifyError(result.error) },
+      { status: 400 }
+    );
+  }
+
+  const { q, page, pageSize } = result.data;
 }
