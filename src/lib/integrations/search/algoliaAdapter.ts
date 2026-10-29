@@ -62,3 +62,22 @@ export async function removeProduct(objectID: string): Promise<void> {
     objectID,
   });
 }
+
+// Och slutligen sök via search-only klienten
+export async function searchProducts(query: string, page: number, hitsPerPage: number): Promise<SearchResult> {
+  const result = await searchClient.searchSingleIndex<AlgoliaProduct>({
+    indexName: INDEX_NAME,
+    searchParams: {
+      query,
+      page: page - 1, // Algolia är 0-indexerat, vårt API är 1-baserat!
+      hitsPerPage,
+    },
+  });
+
+  return {
+    hits: result.hits,
+    totalHits: result.nbHits ?? 0,
+    totalPages: result.nbPages ?? 0,
+    page,
+  };
+}
