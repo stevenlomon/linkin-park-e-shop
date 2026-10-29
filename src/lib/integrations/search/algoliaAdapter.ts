@@ -54,3 +54,11 @@ export async function indexProducts(products: AlgoliaProduct[]): Promise<number>
 
   return products.length;
 }
+
+// Ta bort en produkt från indexet
+export async function removeProduct(objectID: string): Promise<void> {
+  await adminClient.deleteObject({
+    indexName: INDEX_NAME,
+    objectID,
+  });
+}
