@@ -15,3 +15,16 @@ function getStripe() {
 
   return { stripe, webhookSecret: WEBHOOK_SECRET };
 }
+
+// Viktigast med denna är att vi använder pris från databasen, ALDRIG från React
+export type CheckoutItem = {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export async function createCheckoutSession(orderId: number, items: CheckoutItem[]) {
+  const { stripe } = getStripe();
+
+  // Line items, stripe session object och verifiera webhook här
+}
