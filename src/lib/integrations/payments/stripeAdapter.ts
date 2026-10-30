@@ -12,7 +12,7 @@ function getStripe() {
     throw new Error('STRIPE_SECRET_KEY saknas i .env');
   }
 
-  const stripe = new Stripe(SECRET_KEY, { timeout: 10_000 });
+  const stripe = new Stripe(SECRET_KEY, { timeout: 10_000 }); // 10_000 är samma som 10 000. Helt nytt för mig, aldrig sett det innan!
 
   return { stripe, webhookSecret: WEBHOOK_SECRET };
 }
@@ -40,7 +40,7 @@ export async function createCheckoutSession(orderId: number, items: CheckoutItem
     mode: 'payment',
     line_items,
     client_reference_id: String(orderId), // Session ID är Stripe's referens, Order ID är *vår* referes
-    success_url: `${APP_URL}/order/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${APP_URL}/order/confirmation?session_id={CHECKOUT_SESSION_ID}`, // Dynamisk /order/confirmation nu istället för en statisk /thank-you
     cancel_url: `${APP_URL}/checkout`,
   });
 

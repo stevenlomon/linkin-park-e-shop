@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { type CurrentUser } from '@/lib/types'
 
 interface CheckoutFormProps {
@@ -16,8 +15,6 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,8 +39,9 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
       await new Promise((resolve) => setTimeout(resolve, SPINNER_MS));
 
-      router.push(`/thank-you?order=${data.orderId}`);
-      router.refresh();
+      // Det här hanteras av Stripe nu!
+      // router.push(`/thank-you?order=${data.orderId}`);
+      // router.refresh();
     } catch {
       setError('Kunde inte nå servern. Kontrollera din uppkoppling och försök igen.');
       setIsProcessing(false);
