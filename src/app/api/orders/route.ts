@@ -3,8 +3,8 @@ import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { resolveCartId, GUEST_CART_COOKIE } from '@/lib/cart';
 import { cookies } from 'next/headers';
+import { createCheckoutSession } from '@/lib/integrations/payments/stripeAdapter';
 
-// 100% skriven av Claude Code på deadline day
 export async function POST(req: Request) {
   const user = await getCurrentUser();
 
@@ -30,8 +30,9 @@ export async function POST(req: Request) {
   try {
     await client.query('BEGIN');
 
-    const cartRes = await client.query<{ product_id: number; quantity: number; current_price: string }>(
-      `SELECT cp.product_id, cp.quantity, p.current_price
+    // Nu med lagersaldo integrerat!
+    const cartRes = await client.query<{ product_id: number; name: string, quantity: number; current_price: string, stock: number }>(
+      `SELECT cp.product_id, cp.quantity, p.current_price, p.stock
        FROM cart c
        JOIN carts_products cp ON cp.cart_id = c.id
        JOIN product p ON p.id = cp.product_id
@@ -44,15 +45,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Varukorgen är tom' }, { status: 400 });
     }
 
+    // Nu med lagersaldo i applikationen måste vi kontrollera det! Man ska inte kunna köpa om stock är för lågt
+    for (const item of cartRes.rows) {
+      if (item.stock < item.quantity) {
+        await client.query('ROLLBACK');
+        return NextResponse.json(
+          { error: `${item.name} har inte tillräckligt i lager (${item.stock} kvar)` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Och här när vi skapar ordern har vi även status integrerat! Ordern skapas som obetald. Webhook ändrar ordern till 'paid'!
     const orderRes = await client.query<{ id: number }>(
-      `INSERT INTO "Order" (user_id, guest_name, guest_email)
-       VALUES ($1, $2, $3)
+      `INSERT INTO "Order" (user_id, guest_name, guest_email, status)
+       VALUES ($1, $2, $3, 'unpaid')
        RETURNING id`,
       [user?.id ?? null, name.trim(), email.trim()]
     );
 
     const orderId = orderRes.rows[0].id;
 
+    // Det här är recontextualized för mig nu för jag ser så tydligt en viktig detalj från föreläsingarna: priset kommer frår
+    // databasen, ALDRIG React/Frontenden!
     for (const item of cartRes.rows) {
       await client.query(
         `INSERT INTO orders_products (order_id, product_id, quantity, price_at_purchase)
@@ -73,7 +88,32 @@ export async function POST(req: Request) {
       (await cookies()).delete(GUEST_CART_COOKIE);
     }
 
-    return NextResponse.json({ success: 'ok', data: { orderId } }, { status: 201 });
+    // Här efter transaktionen när det finns 0% chans för en ROLLBACK skapar vi vår Checkout Session hos Stripe. 
+    // Om Stripe inte svarar får kunden ett felmeddelande och ordern förblir obetald
+    const checkoutItems = cartRes.rows.map((item) => ({
+      name: item.name,
+      price: Number(item.current_price),
+      quantity: item.quantity,
+    }));
+
+    try {
+      const checkout = await createCheckoutSession(orderId, checkoutItems);
+
+      // Nu när vi har vår checkout session kan vi spara stripe_session_id på ordern
+      await pool.query(
+        `UPDATE "Order" SET stripe_session_id = $1 WHERE id = $2`,
+        [checkout.sessionId, orderId]
+      );
+
+      // Vår NextResponse innehåller nu checkout url. CheckoutForm ser till att React redirectar till denna URL
+      return NextResponse.json({ url: checkout.url }, { status: 201 });
+    } catch (err) {
+      console.error('Kunde inte skapa Stripe Checkout Session:', err);
+      return NextResponse.json(
+        { error: 'Betalningen kunde inte startas. Försök igen senare.' },
+        { status: 502 }
+      );
+    }
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Kunde inte skapa ordern:', err);
