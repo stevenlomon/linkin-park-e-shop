@@ -1,3 +1,4 @@
+import { sign } from 'crypto';
 import Stripe from 'stripe';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
@@ -44,4 +45,15 @@ export async function createCheckoutSession(orderId: number, items: CheckoutItem
   });
 
   return { sessionId: session.id, url: session.url };
+}
+
+// Två av de viktiga grejorna! Verifiera att webhooken kommer från Stripe och arbeta med rå data istället för JSON
+export function verifyWebhook(rawBody: string, signature: string): Stripe.Event {
+  const { stripe, webhookSecret } = getStripe();
+
+  if (!webhookSecret) {
+    throw new Error('STRIPE_WEBHOOK_SECRET saknas i .env');
+  }
+
+  return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
 }
