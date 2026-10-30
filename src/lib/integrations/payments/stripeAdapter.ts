@@ -26,5 +26,22 @@ export type CheckoutItem = {
 export async function createCheckoutSession(orderId: number, items: CheckoutItem[]) {
   const { stripe } = getStripe();
 
-  // Line items, stripe session object och verifiera webhook här
+  const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map((item) => ({
+    quantity: item.quantity,
+    price_data: {
+      currency: 'sek',
+      unit_amount: Math.round(item.price * 100), // Stripe räknar i öre: 599 kr = 59900
+      product_data: { name: item.name },
+    },
+  }));
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items,
+    client_reference_id: String(orderId), // Session ID är Stripe's referens, Order ID är *vår* referes
+    success_url: `${APP_URL}/order/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${APP_URL}/checkout`,
+  });
+
+  return { sessionId: session.id, url: session.url };
 }
