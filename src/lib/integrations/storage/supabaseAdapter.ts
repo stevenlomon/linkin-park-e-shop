@@ -33,7 +33,24 @@ const EXTENSIONS: Record<string, string> = {
 export async function uploadProductImage(productId: number, buffer: Buffer, mimeType: string): Promise<{ path: string; url: string }> {
   const supabase = getSupabase();
   
-  // Kod kommer här
+  const extension = EXTENSIONS[mimeType];
+  if (!extension) {
+    throw new Error(`Unsupported image type: ${mimeType}`);
+  }
+
+  // Ny unik file path varje gång. För security reasons och för caching reasons
+  const path = `products/${productId}/${randomUUID()}.${extension}`;
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
+    contentType: mimeType,
+    upsert: false, // Vi vill att uppladdningen ska misslyckas om sökvägen redan existerar. *Inte* skriva över
+  });
+
+  if (error) {
+    throw new Error(`Could not upload image: ${error.message}`);
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   
-  return { path: "kommer strax", url: "kommer strax" };
+  return { path, url: data.publicUrl };
 }
