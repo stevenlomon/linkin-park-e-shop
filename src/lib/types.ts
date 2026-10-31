@@ -89,6 +89,7 @@ export interface AdminOrder {
   item_count: number;
   total: string;
   items: AdminOrderItem[];
+  status: string;
 
   // För att kunna gå igenom checkout flow som gäst!
   guest_name: string | null;
