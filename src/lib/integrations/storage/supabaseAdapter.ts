@@ -54,3 +54,13 @@ export async function uploadProductImage(productId: number, buffer: Buffer, mime
   
   return { path, url: data.publicUrl };
 }
+
+export async function removeProductImage(path: string): Promise<void> {
+  const supabase = getSupabase();
+
+  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+
+  if (error) {
+    throw new Error(`Could not delete image: ${error.message}`);
+  }
+}
