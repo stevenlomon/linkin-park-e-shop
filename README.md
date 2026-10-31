@@ -39,3 +39,17 @@ Möjliga förbättringar:
 - Valbar pageSize i sök-UI:n (API:t stödjer redan 1–50, frontend skickar just nu alltid 12)
 - Indexera manuellt skapade produkter (kräver att en objectID-strategi bestäms)
 - Lägga till `image_id` i Algolia-indexet för att visa bilder i sökresultat
+
+## Betalning med Stripe (Issue #17)
+
+Beställningar skapas som `unpaid` och skickas till Stripe Hosted Checkout. En webhook lyssnar på events från Stripe och uppdaterar orderstatus samt minskar lagersaldo när betalningen bekräftas.
+
+### Designbeslut: Hosted Checkout istället för Embedded
+
+Jag valde Hosted eftersom det endast kräver ett paket (`stripe`) och mindre ändringar i vår frontend. Kunden lämnar vår sida tillfälligt men Stripe hanterar kortvarlidering, betalmetoder etc etc åt oss
+
+Möjliga förbättringar:
+
+- Embedded Checkout för att hålla kunden kvar på sidan (kräver `@stripe/stripe-js` + `@stripe/react-stripe-js`)
+- Lagerreservation med `FOR UPDATE`-lås för att undvika att två kunder köper sista exemplaret samtidigt
+- Orderbekräftelsemail efter betalning (via Resend, Nodemailer eller Stripes egna kvitton)
