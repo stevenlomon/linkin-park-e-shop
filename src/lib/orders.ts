@@ -10,6 +10,7 @@ export async function getAllOrders(): Promise<AdminOrder[]> {
       SELECT
         o.id,
         o.ordered_at,
+        o.status, -- Vi hämtar nu också status!
         u.username,
         u.email,
         o.guest_name,

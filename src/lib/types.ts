@@ -69,6 +69,7 @@ export interface ProductDetail {
   currency_code: string | null;
   category_name: string | null;
   is_active: boolean;
+  stock: number | null;
 }
 
 export interface AdminOrderItem {
@@ -89,6 +90,7 @@ export interface AdminOrder {
   item_count: number;
   total: string;
   items: AdminOrderItem[];
+  status: string;
 
   // För att kunna gå igenom checkout flow som gäst!
   guest_name: string | null;

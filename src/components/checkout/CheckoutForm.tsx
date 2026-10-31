@@ -1,14 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { type CurrentUser } from '@/lib/types'
 
 interface CheckoutFormProps {
   user: CurrentUser | null;
 }
-
-const SPINNER_MS = 3400;
 
 export default function CheckoutForm({ user }: CheckoutFormProps) {
   const [name, setName] = useState('');
@@ -16,8 +13,6 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,12 +33,15 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
         return;
       }
 
-      const { data } = await res.json();
+      // Vi får tillbaka en URL nu! Inte data
+      const { url } = await res.json();
 
-      await new Promise((resolve) => setTimeout(resolve, SPINNER_MS));
+      // Istället för detta...
+      // router.push(`/thank-you?order=${data.orderId}`);
+      // router.refresh();
 
-      router.push(`/thank-you?order=${data.orderId}`);
-      router.refresh();
+      // ...har vi nu istället redirect till Stripes hosted checkout-sida!
+      window.location.href = url;
     } catch {
       setError('Kunde inte nå servern. Kontrollera din uppkoppling och försök igen.');
       setIsProcessing(false);
@@ -59,7 +57,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-ink/95"
         >
           <div className="h-12 w-12 animate-spin rounded-full border-2 border-line border-t-accent" />
-          <p className="lp-eyebrow text-muted">Behandlar din order…</p>
+          <p className="lp-eyebrow text-muted">Omdirigerar till betalning…</p>
         </div>
       )}
 
@@ -89,20 +87,16 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             required
           />
           <p className="mt-2 text-xs text-muted">
-            Din orderbekräftelse skulle skickas hit.
+            Din orderbekräftelse skickas hit.
           </p>
         </div>
 
         {error && <p role='alert' className="text-sm text-danger">{error}</p>}
 
         <button type='submit' disabled={isProcessing} className="lp-btn-primary w-full sm:w-auto">
-          {isProcessing ? 'Behandlar…' : 'Slutför köp'}
+          {isProcessing ? 'Behandlar…' : 'Gå till betalning'}
         </button>
-
-        <p className="text-xs text-muted">
-          Det här är ett skolprojekt. Ingen betalning genomförs och inget skickas.
-        </p>
       </form>
     </>
   )
-};
+}

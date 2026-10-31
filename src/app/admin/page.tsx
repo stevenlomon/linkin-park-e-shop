@@ -60,6 +60,7 @@ export default async function AdminPage() {
             <thead>
               <tr className="border-b border-line">
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Order</th>
+                <th className="lp-eyebrow py-4 pr-6 text-muted">Status</th>
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Datum</th>
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Kund</th>
                 <th className="lp-eyebrow py-4 pr-6 text-muted">Produkter</th>
@@ -71,6 +72,19 @@ export default async function AdminPage() {
               {orders.map((order) => (
                 <tr key={order.id} className="border-b border-line align-top">
                   <td className="py-6 pr-6 text-sm font-bold">#{order.id}</td>
+
+                  {/* NEW: Status! */}
+                  <td className="py-6 pr-6">
+                    <span className={`inline-block px-3 py-1 text-[11px] font-bold uppercase tracking-widest ${
+                      order.status === 'paid'
+                        ? 'bg-green-900/30 text-green-400'
+                        : order.status === 'cancelled'
+                          ? 'bg-red-900/30 text-red-400'
+                          : 'bg-yellow-900/30 text-yellow-400'
+                    }`}>
+                      {order.status === 'paid' ? 'Betald' : order.status === 'cancelled' ? 'Avbruten' : 'Obetald'}
+                    </span>
+                  </td>
 
                   <td className="py-6 pr-6 text-sm text-muted">{formatDate(order.ordered_at)}</td>
 

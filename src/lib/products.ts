@@ -58,6 +58,7 @@ export async function getProductById(id: number): Promise<Product | null> {
 export async function getProductDetail(id: number): Promise<ProductDetail | null> {
   const query = {
     name: 'fetch-product-detail',
+    // Hämtar nu lagersaldo
     text: `
       SELECT
         p.id,
@@ -66,6 +67,7 @@ export async function getProductDetail(id: number): Promise<ProductDetail | null
         p.standard_price,
         p.current_price,
         p.is_active,
+        p.stock,
         cu.name AS currency_code,
         ca.name AS category_name
       FROM product p
