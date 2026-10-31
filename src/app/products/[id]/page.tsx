@@ -97,6 +97,15 @@ export default async function DetailedProductPage({ params }: PageProps<'/produc
             )}
           </div>
 
+          {/* NEW: Lagersaldo! */}
+          {product.stock !== null && (
+            <p className="mb-8 text-sm text-muted">
+              {product.stock > 0
+                ? `${product.stock} i lager`
+                : 'Slut i lager'}
+            </p>
+          )}
+
           <AddToCartButton productId={product.id} />
 
           {product.description && (

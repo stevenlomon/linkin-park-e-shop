@@ -69,6 +69,7 @@ export interface ProductDetail {
   currency_code: string | null;
   category_name: string | null;
   is_active: boolean;
+  stock: number | null;
 }
 
 export interface AdminOrderItem {
