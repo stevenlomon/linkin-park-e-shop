@@ -31,8 +31,8 @@ export async function POST(req: Request) {
     await client.query('BEGIN');
 
     // Nu med lagersaldo integrerat!
-    const cartRes = await client.query<{ product_id: number; name: string, quantity: number; current_price: string, stock: number }>(
-      `SELECT cp.product_id, cp.quantity, p.current_price, p.stock
+    const cartRes = await client.query<{ product_id: number; quantity: number; name: string, current_price: string, stock: number }>(
+      `SELECT cp.product_id, cp.quantity, p.name, p.current_price, p.stock
        FROM cart c
        JOIN carts_products cp ON cp.cart_id = c.id
        JOIN product p ON p.id = cp.product_id
