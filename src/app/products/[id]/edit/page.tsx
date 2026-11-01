@@ -3,13 +3,13 @@ import { getCurrentUser } from '@/lib/auth'
 import { getProductById } from '@/lib/products';
 import { getAllLeafCategories } from '@/lib/categories';
 import { getAllCurrencies } from '@/lib/currencies';
-import { getProductImage } from '@/lib/productImage';
+// import { getProductImage } from '@/lib/productImage';
 import EditProductForm from '@/components/products/EditProductForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EditProductPage({ params }: PageProps<'/products/[id]/edit'>) {
-  // Innan nånting; admin säkra sidan!
+  // Innan nånting; admin-säkra sidan!
   const user = await getCurrentUser();
   if (user?.role_name !== 'admin') {
     redirect('/');
@@ -25,19 +25,20 @@ export default async function EditProductPage({ params }: PageProps<'/products/[
   // Och nu försvann ALLA TS errors haha. För nu vet TS med säkerhet att vi jobbar med en variabel 
   // med namn `product` som garanterat är av typ `Product`, inte `Product | null`! Got it, got it
 
-  // Alternativen till dropdownsen. Oberoende av varandra, så vi kör dem parallellt
-  const [leafCategories, currencies, existingImage] = await Promise.all([
+  // Alternativen till våra dropdowns. Oberoende av varandra, så vi kör dem parallellt
+  const [leafCategories, currencies] = await Promise.all([
     getAllLeafCategories(),
     getAllCurrencies(),
-    getProductImage(productId),
+    // getProductImage(productId), Denna tilldelades tidigare till existingImage
   ]);
 
   return (
+    // Denna komponent tar inte existingImage som en prop längre; den får image_url från initialProductData istället!
     <EditProductForm
       initialProductData={product}
       leafCategories={leafCategories}
       currencies={currencies}
-      existingImage={existingImage}
+      // existingImage={existingImage}
     />
   )
 };

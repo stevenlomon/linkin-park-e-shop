@@ -20,8 +20,7 @@ export interface ProductListItem {
   name: string;
   current_price: string;
   currency_code: string | null;
-  image_id: number | null;
-  image_alt_text: string | null;
+  image_url: string | null; // Bara URL nu med Supabase istället för id och alt text
 }
 
 export interface Product {
@@ -36,6 +35,8 @@ export interface Product {
   supplier_sku: string | null; // en leverantörs artNr, t.ex. "LEV-1001"
   stock: number | null;        // null -> okänt, 0 = out of stock
   variants: string[] | null;   // t.ex. ["S", "M", "L", "XL"]
+  image_url: string | null;
+  image_path: string | null;
 }
 
 export interface CartItem {
@@ -45,20 +46,21 @@ export interface CartItem {
   quantity: number;
   current_price: string;  // numeric → sträng från pg
   currency_code: string | null;
-  image_id: number | null; // för thumbnail i kundkorgen
+  image_url: string | null; // för thumbnail i kundkorgen
 }
 export interface Currency {
   id: number;
   name: string;
 }
 
-export interface ProductImage {
-  id: number;
-  product_id: number;
-  mime_type: string;
-  alt_text: string | null;
-  size_bytes: number;
-}
+// Supabase hanterar bilder nu. Med detta raderas även productImage.ts
+// export interface ProductImage {
+//   id: number;
+//   product_id: number;
+//   mime_type: string;
+//   alt_text: string | null;
+//   size_bytes: number;
+// }
 
 export interface ProductDetail {
   id: number;
@@ -70,6 +72,7 @@ export interface ProductDetail {
   category_name: string | null;
   is_active: boolean;
   stock: number | null;
+  image_url: string | null;
 }
 
 export interface AdminOrderItem {

@@ -113,9 +113,9 @@ export default function CartDropdown({ items, itemCount, rates, selectedCurrency
                       onClick={() => setIsOpen(false)}
                       className="h-16 w-16 shrink-0 overflow-hidden bg-tile"
                     >
-                      {item.image_id ? (
+                      {item.image_url ? (
                         <Image
-                          src={`/api/images/${item.image_id}`}
+                          src={item.image_url}
                           alt={item.name}
                           width={64}
                           height={64}

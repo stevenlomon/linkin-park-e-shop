@@ -18,10 +18,10 @@ export default function ProductCard({ product, rates, selectedCurrency }: Produc
       {/* Ljus platta bakom bilden, precis som i den riktiga butiken: produkterna
           ligger på ljusgrått mot den svarta sidan */}
       <div className="aspect-square overflow-hidden bg-tile">
-        {product.image_id ? (
+        {product.image_url ? (
           <Image
-            src={`/api/images/${product.image_id}`}
-            alt={product.image_alt_text ?? product.name}
+            src={product.image_url} // Pekar nu direkt till Supabase's CDN. Ingen API request för att visa bilder längre
+            alt={product.name}
             width={500}
             height={500}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

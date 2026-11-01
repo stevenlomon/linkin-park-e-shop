@@ -52,9 +52,9 @@ export default async function CheckoutPage() {
             {items.map((item) => (
               <li key={item.item_id} className="flex gap-4">
                 <div className="h-20 w-20 shrink-0 overflow-hidden bg-tile">
-                  {item.image_id && (
+                  {item.image_url && (
                     <Image
-                      src={`/api/images/${item.image_id}`}
+                      src={item.image_url}
                       alt={item.name}
                       width={80}
                       height={80}

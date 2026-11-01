@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getCurrentUser } from '@/lib/auth';
 import { getProductDetail } from '@/lib/products';
-import { getProductImage } from '@/lib/productImage';
+// import { getProductImage } from '@/lib/productImage'; Vi använder Supabase nu istället
 import { getExchangeRates } from '@/lib/integrations/currencyAdapter';
 import { getSelectedCurrency, convertPrice } from '@/lib/currencies';
 import AddToCartButton from '@/components/products/AddToCartButton';
@@ -38,7 +38,6 @@ export default async function DetailedProductPage({ params }: PageProps<'/produc
   
   if (!product.is_active && !isAdmin) notFound();
   
-  const image = await getProductImage(productId);
   const [rates, selectedCurrency] = await Promise.all([
     getExchangeRates(),
     getSelectedCurrency(),
@@ -55,10 +54,10 @@ export default async function DetailedProductPage({ params }: PageProps<'/produc
       <div className="mt-8 grid gap-12 lg:grid-cols-2">
 
         <div className="aspect-square overflow-hidden bg-tile">
-          {image ? (
+          {product.image_url ? (
             <Image
-              src={`/api/images/${image.id}`}
-              alt={image.alt_text ?? product.name}
+              src={product.image_url}
+              alt={product.name}
               width={800}
               height={800}
               priority
