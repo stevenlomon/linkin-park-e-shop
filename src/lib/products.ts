@@ -15,7 +15,7 @@ export async function getAllActiveProducts(categoryId?: number | null): Promise<
         p.name,
         p.current_price,
         p.image_url,
-        c.name AS currency_code,
+        c.name AS currency_code
       FROM product p
       LEFT JOIN currency c ON p.currency_id = c.id
       WHERE p.is_active = true
