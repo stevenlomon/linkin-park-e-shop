@@ -101,3 +101,57 @@ export async function POST(req: Request, { params }: RouteContext<'/api/products
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 };
+
+// Min tidigare /api/images/[id] route hade DELETE och behovet finns här också. Så nu får jag dyka in i det!
+export async function DELETE(_req: Request, { params }: RouteContext<'/api/products/[id]/images'>) {
+  try {
+    const user = await getCurrentUser();
+    if (user?.role_name !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const productId = Number(id);
+
+    if (!Number.isInteger(productId)) {
+      return NextResponse.json({ error: 'Ogiltigt id' }, { status: 400 });
+    }
+
+    // Av säkerhets skäl tar vi sökvägen från databasen, INTE från vår request
+    // Samma princip som i vår Stripe integration! Priser kommer från databasen, INTE från browsern
+    // Genom att gå via databasen kan vi med 100% säkerhet garantera ägarskap och hindra en
+    // admin från att radera bilder de inte har tillgång till
+    const existing = await pool.query<{ image_path: string | null }>(
+      'SELECT image_path FROM product WHERE id = $1',
+      [productId]
+    );
+
+    if (existing.rowCount === 0) {
+      return NextResponse.json({ error: 'Produkten hittades inte' }, { status: 404 });
+    }
+
+    const imagePath = existing.rows[0].image_path;
+
+    if (!imagePath) {
+      return NextResponse.json({ error: 'Produkten har ingen bild' }, { status: 404 });
+    }
+
+    // Vi nollställer i databasen först, sedan tar vi bort filen från Supabase
+    // Motsatt order från när vi skapar/laddar upp. Allt för att hindra att en användare ser broken state
+    await pool.query(
+      'UPDATE product SET image_path = NULL, image_url = NULL WHERE id = $1',
+      [productId]
+    );
+
+    try {
+      await removeProductImage(imagePath);
+    } catch (err) {
+      console.error('Kunde inte ta bort bilden från Supabase:', err);
+    }
+
+    return NextResponse.json({ success: 'ok' });
+  } catch (err) {
+    console.error('Kunde inte radera bilden:', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

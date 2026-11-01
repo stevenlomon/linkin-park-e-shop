@@ -60,7 +60,7 @@ export default function EditProductForm({ initialProductData, leafCategories, cu
     setImageError(null);
 
     try {
-      // Kallar på samma route som product upload nu istället för vår gamla /api/images. DELETE skrivs i nästa commit
+      // Kallar på samma route som product upload nu istället för vår gamla /api/images
       const res = await fetch(`/api/products/${initialProductData.id}/images`, { method: 'DELETE' });
 
       if (!res.ok) {
