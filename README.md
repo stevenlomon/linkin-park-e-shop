@@ -71,3 +71,21 @@ Möjliga förbättringar:
 - Stöd för fler bildformat (WebP, AVIF)
 - Flera bilder per produkt (bildgalleri)
 - Bildoptimering/komprimering på serversidan före upload
+
+## Frakt med PostNord (Issue #21)
+
+Checkout visar fraktalternativ (ombud och hemleverans) med pris, beräknad leveranstid och närmaste ombud baserat på kundens postnummer via PostNords Service Points V5 och Transit Time V1 API:er.
+
+### AI-användning
+
+Detta är en AI-labb där fokuset ligger på hur man använder AI för att skriva 100% av koden. Hur jag normalt använder AI finns att läsa i [PostNord adapter](./src/lib/integrations/shipping/postnordAdapter.ts).  
+Det viktigaste med AI, vare sig man använder en agent med write access eller bara kör chat med klipp och klister, tycker jag kontext är bland det allra viktigaste. Så det första jag ser till är att Claude Code sessionen körs i mappen med alla filer så att agenten kan läsa dem.  
+Som laborations PDF:en även pekar ut är det väldigt viktigt att aldrig dela API-nycklar direkt i AI chatten samt att godkänna kommandon agenten vill köra om de kräver specifika privileges.  
+
+Sedan gör jag en action plan genom att ge URL till de relevant mapparna i föreläsnings repot (https://github.com/sibala/integration-with-external-systems-fsu25) samt den specifika laborations PDF:en.  
+För just adaptern tog jag Swagger dokumentationen som Postnord ger för sina API:er och klistrade in dem som .txt här i repot så att Claude Code kan läsa dem utan att de bidrar till "context bloat".  
+
+I prompt väg kör jag inte något fancy. Väldigt konversionell engelska. "Look at the two new txt files in the repo", "Write the full verified adapter please" osv.  
+Jag ser fortfarande till att stå 100% för allting Git relaterat: Issues, commits, PR och merge in till main. På så sätt ser jag alltid till att jag är the human-in-the-loop.  
+
+Och all Claude's kod fungerade på första försöket utan att jag behövde rätta till nånting! Jag verifierade manuellt på localhost och kan se mitt närmaste postombud vid checkout!  
