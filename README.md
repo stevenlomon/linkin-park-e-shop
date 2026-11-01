@@ -89,3 +89,4 @@ I prompt väg kör jag inte något fancy. Väldigt konversionell engelska. "Look
 Jag ser fortfarande till att stå 100% för allting Git relaterat: Issues, commits, PR och merge in till main. På så sätt ser jag alltid till att jag är the human-in-the-loop.  
 
 Och all Claude's kod fungerade på första försöket utan att jag behövde rätta till nånting! Jag verifierade manuellt på localhost och kan se mitt närmaste postombud vid checkout!  
+Edit: Koden må ha funkat men lint steget visade att Claude kallade på `setState` i en `useEffect` vilket ger cascading renders errors och hindrar vå CI pipeline att köra igenom och merge:a in i main. Så *fungerande* kod men kanske inte den renaste koden haha

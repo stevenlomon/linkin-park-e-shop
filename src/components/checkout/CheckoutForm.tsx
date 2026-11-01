@@ -34,17 +34,23 @@ export default function CheckoutForm({ user, cartTotal }: CheckoutFormProps) {
   // Fraktpris beräknas client-side för display, men servern räknar om på submit (aldrig lita på React)
   const shippingPrice = shippingMethod ? getShippingPrice(shippingMethod, cartTotal) : null;
 
+  // Alla resets sker i onChange istället för i useEffect — undviker synchronous setState i effects
+  function handlePostalCodeChange(value: string) {
+    const digits = value.replace(/\D/g, '');
+    setPostalCode(digits);
+    setSelectedPointId('');
+    setServicePoints([]);
+    setEstimatedDelivery(null);
+    setShippingError(null);
+
+    if (/^\d{5}$/.test(digits)) {
+      setIsLoadingShipping(true);
+    }
+  }
+
   // Hämta ombud + leveranstid när postnummer har 5 siffror
   useEffect(() => {
-    if (!/^\d{5}$/.test(postalCode)) {
-      setServicePoints([]);
-      setEstimatedDelivery(null);
-      setShippingError(null);
-      return;
-    }
-
-    setIsLoadingShipping(true);
-    setShippingError(null);
+    if (!/^\d{5}$/.test(postalCode)) return;
 
     Promise.all([
       fetch(`/api/shipping/service-points?postalCode=${postalCode}`).then((r) => r.json()),
@@ -66,11 +72,6 @@ export default function CheckoutForm({ user, cartTotal }: CheckoutFormProps) {
       .finally(() => {
         setIsLoadingShipping(false);
       });
-  }, [postalCode]);
-
-  // Reset service point om postnummer ändras
-  useEffect(() => {
-    setSelectedPointId('');
   }, [postalCode]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -178,7 +179,7 @@ export default function CheckoutForm({ user, cartTotal }: CheckoutFormProps) {
               inputMode='numeric'
               maxLength={5}
               value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, ''))}
+              onChange={(e) => handlePostalCodeChange(e.target.value)}
               placeholder='11152'
               autoComplete='postal-code'
               className="lp-input max-w-[10rem]"
