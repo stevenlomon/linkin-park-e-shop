@@ -90,6 +90,10 @@ export interface AdminOrder {
   shipping_city: string | null;
   shipping_postal_code: string | null;
   shipping_country: string | null;
+  shipping_method: string | null;
+  shipping_price: string | null;
+  service_point_id: string | null;
+  service_point_name: string | null;
   item_count: number;
   total: string;
   items: AdminOrderItem[];

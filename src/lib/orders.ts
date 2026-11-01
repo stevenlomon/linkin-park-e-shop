@@ -19,6 +19,10 @@ export async function getAllOrders(): Promise<AdminOrder[]> {
         o.shipping_city,
         o.shipping_postal_code,
         o.shipping_country,
+        o.shipping_method,
+        o.shipping_price,
+        o.service_point_id,
+        o.service_point_name,
         COALESCE(SUM(op.quantity), 0)::int AS item_count,
         COALESCE(SUM(op.quantity * op.price_at_purchase), 0) AS total,
         COALESCE(

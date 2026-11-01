@@ -42,7 +42,7 @@ export default async function CheckoutPage() {
 
         <div>
           <h2 className="lp-eyebrow mb-6 text-muted">Dina uppgifter</h2>
-          <CheckoutForm user={user} />
+          <CheckoutForm user={user} cartTotal={total} />
         </div>
 
         <aside className="lg:border-l lg:border-line lg:pl-10">
@@ -82,7 +82,7 @@ export default async function CheckoutPage() {
             <span className="text-lg font-bold">{formatPrice(total)} {currencyCode}</span>
           </div>
 
-          <p className="mt-3 text-xs text-muted">Ingen frakt eller betalning i det här skolprojektet.</p>
+          <p className="mt-3 text-xs text-muted">Fraktkostnad tillkommer beroende på valt fraktsätt.</p>
         </aside>
 
       </div>
