@@ -4,11 +4,14 @@ import { getCurrentUser } from '@/lib/auth';
 import { resolveCartId, GUEST_CART_COOKIE } from '@/lib/cart';
 import { cookies } from 'next/headers';
 import { createCheckoutSession } from '@/lib/integrations/payments/stripeAdapter';
+import { getShippingPrice, getShippingLabel } from '@/lib/shipping';
+import { findServicePoints } from '@/lib/integrations/shipping/postnordAdapter';
+import type { ShippingMethod } from '@/lib/shipping';
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
 
-  const { name, email } = await req.json();
+  const { name, email, shippingMethod, postalCode, servicePointId, servicePointName } = await req.json();
 
   if (typeof name !== 'string' || name.trim() === '') {
     return NextResponse.json({ error: 'Namn måste fyllas i' }, { status: 400 });
@@ -16,6 +19,41 @@ export async function POST(req: Request) {
 
   if (typeof email !== 'string' || !email.includes('@')) {
     return NextResponse.json({ error: 'En giltig e-postadress krävs' }, { status: 400 });
+  }
+
+  // --- Shipping validation ---
+
+  if (shippingMethod !== 'ombud' && shippingMethod !== 'home') {
+    return NextResponse.json({ error: 'Välj fraktsätt (ombud eller hemleverans)' }, { status: 400 });
+  }
+
+  if (typeof postalCode !== 'string' || !/^\d{5}$/.test(postalCode)) {
+    return NextResponse.json({ error: 'Postnummer måste vara 5 siffror' }, { status: 400 });
+  }
+
+  // Ombud kräver service point — servern validerar mot PostNord så att ingen kan skicka ett påhittat ID
+  if (shippingMethod === 'ombud') {
+    if (!servicePointId || !servicePointName) {
+      return NextResponse.json({ error: 'Välj ett ombud' }, { status: 400 });
+    }
+
+    try {
+      const points = await findServicePoints(postalCode);
+      const valid = points.some((p) => p.id === servicePointId);
+
+      if (!valid) {
+        return NextResponse.json(
+          { error: 'Ogiltigt ombud. Välj ett från listan.' },
+          { status: 400 },
+        );
+      }
+    } catch {
+      // PostNord nere → vi kan inte validera ombudet, neka ordern med tydligt meddelande
+      return NextResponse.json(
+        { error: 'Kunde inte verifiera ombudet. Försök igen eller välj hemleverans.' },
+        { status: 502 },
+      );
+    }
   }
 
   const cartId = await resolveCartId();
@@ -56,12 +94,34 @@ export async function POST(req: Request) {
       }
     }
 
-    // Och här när vi skapar ordern har vi även status integrerat! Ordern skapas som obetald. Webhook ändrar ordern till 'paid'!
+    // Beräkna varukorgens totalpris — från databasen, ALDRIG React!
+    const cartTotal = cartRes.rows.reduce(
+      (sum, item) => sum + Number(item.current_price) * item.quantity,
+      0,
+    );
+
+    // Fraktpris beräknas server-side. React skickar ALDRIG priset — precis som produktpriserna
+    const shippingPrice = getShippingPrice(shippingMethod as ShippingMethod, cartTotal);
+
+    // Ordern skapas med fraktdata — shipping_price är vad vi faktiskt debiterar (snapshot, som price_at_purchase)
     const orderRes = await client.query<{ id: number }>(
-      `INSERT INTO "Order" (user_id, guest_name, guest_email, status)
-       VALUES ($1, $2, $3, 'unpaid')
+      `INSERT INTO "Order" (
+        user_id, guest_name, guest_email, status,
+        shipping_method, shipping_price, service_point_id, service_point_name,
+        shipping_postal_code
+      )
+       VALUES ($1, $2, $3, 'unpaid', $4, $5, $6, $7, $8)
        RETURNING id`,
-      [user?.id ?? null, name.trim(), email.trim()]
+      [
+        user?.id ?? null,
+        name.trim(),
+        email.trim(),
+        shippingMethod,
+        shippingPrice,
+        shippingMethod === 'ombud' ? servicePointId : null,
+        shippingMethod === 'ombud' ? servicePointName : null,
+        postalCode,
+      ]
     );
 
     const orderId = orderRes.rows[0].id;
@@ -88,13 +148,23 @@ export async function POST(req: Request) {
       (await cookies()).delete(GUEST_CART_COOKIE);
     }
 
-    // Här efter transaktionen när det finns 0% chans för en ROLLBACK skapar vi vår Checkout Session hos Stripe. 
+    // Här efter transaktionen när det finns 0% chans för en ROLLBACK skapar vi vår Checkout Session hos Stripe.
     // Om Stripe inte svarar får kunden ett felmeddelande och ordern förblir obetald
     const checkoutItems = cartRes.rows.map((item) => ({
       name: item.name,
       price: Number(item.current_price),
       quantity: item.quantity,
     }));
+
+    // Frakt som extra line_item i Stripe — kunden ser "Ombud (PostNord) 59,00 kr" på betalningssidan.
+    // Fraktpris 0 (fri frakt) → vi lägger inte till en rad, Stripe visar bara produkterna
+    if (shippingPrice > 0) {
+      checkoutItems.push({
+        name: getShippingLabel(shippingMethod as ShippingMethod),
+        price: shippingPrice,
+        quantity: 1,
+      });
+    }
 
     try {
       const checkout = await createCheckoutSession(orderId, checkoutItems);
