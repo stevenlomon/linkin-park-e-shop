@@ -111,8 +111,19 @@ export default async function AdminPage() {
                     </ul>
                   </td>
 
-                  <td className="py-6 text-right text-sm font-bold">
-                    {formatPrice(order.total)} SEK
+                  <td className="py-6 text-right text-sm">
+                    <span className="font-bold">{formatPrice(order.total)} SEK</span>
+                    {order.shipping_method && (
+                      <span className="mt-1 block text-xs text-muted">
+                        {order.shipping_method === 'ombud' ? 'Ombud' : 'Hemleverans'}
+                        {' '}({order.shipping_price && Number(order.shipping_price) > 0
+                          ? `${formatPrice(order.shipping_price)} kr`
+                          : 'Fri frakt'})
+                        {order.service_point_name && (
+                          <span className="mt-0.5 block">{order.service_point_name}</span>
+                        )}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
