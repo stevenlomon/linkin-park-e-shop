@@ -35,6 +35,42 @@ Stripe: Kör `stripe listen --forward-to localhost:3000/api/stripe/webhook` i en
 PostNord: Sandbox-nyckeln fungerar direkt mot `atapi2.postnord.com`. Ange ett svenskt postnummer i kassan.
 Leverantörsimport: Gå till `/admin/import` (kräver admin-konto).
 
+## Reflektion över projektet (måste hållas till ca 400-800 ord)
+**1. Integrationsmodell per tjänst**
+
+Leverantörsimport använder REST + fil. Servern hämtar en CSV- eller XML-fil från leverantörens API och parse:ar den rad för rad. Filbaserad import passar här eftersom vi inte behöver realtidsuppdateringar och vi behöver hela datasetet på en gång. Att bygga ett eget leverantörssystem skulle kräva att vi själva underhåller produktkatalog, priser och lagerdata, vilket är information vi inte äger.
+
+Algolia använder ett SDK (`algoliasearch`) som om jag förstår rätt under huven gör REST-anrop. SDK:t ger oss typsäkra metoder som `saveObject` och `deleteObject` istället för att vi bygger URL:er och headers själva. Att bygga egen fulltextsök kräver en sökmotor (t.ex. Elasticsearch eller Meilisearch), indexering, ranking, typo-tolerans och infrastruktur. Algolias free tier ger oss allt detta med ett SDK-anrop.
+
+Stripe använder SDK + webhook + redirect. SDK:t (`stripe`) skapar Checkout Sessions server-side, kunden redirectas till Stripes hosted checkout-sida, och en webhook tar emot `checkout.session.completed`-eventet asynkront. Redirect-modellen innebär att vi aldrig hanterar kortdata. Att bygga eget betalningssystem kräver om jag förstår rätt PCI DSS-certifiering, bedrägeridetektering och stöd för Swish/Klarna/Apple Pay. Och här kan enbart certifieringen kostar hundratusentals kronor!!
+
+Supabase Storage använder SDK (`@supabase/supabase-js`). Admin laddar upp en bild via React → Server → Supabase. Att serva bilder från egen server fungerar i liten skala (jag hade detta i början!), men utan ett dedikerat CDN blir det långsamt för användare långt bort och servern belastas av bildtrafik istället för API-anrop.
+
+PostNord använder direkt REST utan SDK. Om jag förstår rätt har inte PostNord ett officiellt Node.js-SDK, så vi gör fetch-anrop mot deras API:er med Zod-validering av svaren. PostNord äger datan om 6000+ ombud i Sverige (t.ex. öppettider, adresser och leveranstider) som vi omöjligen skulle kunna samla in själva.
+
+**2. Varför går anropen via servern?**
+
+Alla externa anrop går genom Next.js API routes, inte direkt från React. Tre anledningar:
+
+- **Hemligheter.** API-nycklar (STRIPE_SECRET_KEY, POSTNORD_API_KEY etc.) lever i `process.env` på servern. Om React anropade PostNord direkt skulle nyckeln synas i DevTools → Network.
+- **Prisintegritet.** Servern beräknar fraktpris och produktpris från databasen. React skickar aldrig pris. Detta skulle möjliggöra att en kund ändrar priset i DevTools och betala fel summa via Stripe.
+- **Validering.** Servern validerar t.ex. service point-ID mot PostNord innan ordern skapas. En "tampered request" med servicePointId: "FAKE-123" avvisas med ett tydligt felmeddelande.  
+
+**3. Vad händer om en tjänst är nere?**
+
+Varje integration hanterar fel utan att ta ner hela shoppen:
+
+- Stripe nere → ordern sparas som unpaid och kan slutföras senare.
+- Algolia nere → söksidan visar fel men produktlista, varukorg och checkout fungerar normalt via databasen.
+- Supabase nere → bilduppladdning misslyckas, men befintliga bilder serveras från CDN-cache.
+- PostNord nere → kunden tappar ombudsalternativet men kan fortfarande välja hemleverans och slutföra köpet.
+
+**4. Risker med beroendet**
+
+Stripe hanterar betalningar och därmed persondata (namn, e-post, kortuppgifter). Enligt GDPR är Stripe vårt personuppgiftsbiträde, dvs. om de ändrar villkor eller drabbas av en dataläcka är det vi som ansvarar mot kunden. Stripe tar tydligen dessutom 1,4% + 1,80 kr per transaktion, en kostnad som skalar med omsättningen. Ett prishopp kan vara svårt att migrera ifrån snabbt eftersom Stripe äger checkout-flödet och webhook-infrastrukturen. PostNord skickar kundens postnummer till PostNords servrar, men postnummer är svagare persondata än namn, e-post eller kortuppgifter. 
+
+Generellt gäller att alla gratisplaner och sandbox-miljöer vi använder (Algolia, Stripe test mode, Supabase free tier, PostNord sandbox) har rate limits, begränsad support och inga SLA-garantier (Service Level Agreement). I en produktionsmiljö behöver varje tjänst en betald plan med avtalade uppetidsgarantier, och error handling blir ännu viktigare som fallback när SLA:t ändå inte håller.
+
 ## Reflektioner kring varje enskild integration
 
 ### Leverantörsimport (Issue #10)
@@ -119,7 +155,7 @@ Som laborations PDF:en även pekar ut är det väldigt viktigt att aldrig dela A
 Sedan gör jag en action plan genom att ge URL till de relevant mapparna i föreläsnings repot (https://github.com/sibala/integration-with-external-systems-fsu25) samt den specifika laborations PDF:en.  
 För just adaptern tog jag Swagger dokumentationen som Postnord ger för sina API:er och klistrade in dem som .txt här i repot så att Claude Code kan läsa dem utan att de bidrar till "context bloat".  
 
-I prompt väg kör jag inte något fancy. Väldigt konversionell engelska. "Look at the two new txt files in the repo", "Write the full verified adapter please" osv.  
+I prompt väg kör jag inte något fancy. Väldigt konversationell engelska. "Look at the two new txt files in the repo", "Write the full verified adapter please" osv.  
 Jag ser fortfarande till att stå 100% för allting Git relaterat: Issues, commits, PR och merge in till main. På så sätt ser jag alltid till att jag är the human-in-the-loop.  
 
 Och all Claude's kod fungerade på första försöket utan att jag behövde rätta till nånting! Jag verifierade manuellt på localhost och kan se mitt närmaste postombud vid checkout!  
