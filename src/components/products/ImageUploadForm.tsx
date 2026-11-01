@@ -42,7 +42,7 @@ export default function ImageUploadForm({ onFileChange }: ImageUploadFormProps) 
 
     // Error hantering med hjälp av våra gräns-variabler
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Filformatet stöds inte. Välj JPEG, PNG, WebP eller AVIF.');
+      setError('Filformatet stöds inte. Välj JPEG eller PNG.');
       reset();
       return;
     }

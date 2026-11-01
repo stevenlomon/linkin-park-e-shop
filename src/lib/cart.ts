@@ -86,15 +86,14 @@ export const getCart = cache(async (): Promise<CartItem[]> => {
         cp.id            AS item_id,
         p.id             AS product_id,
         p.name           AS name,
-        cp.quantity,
         p.current_price,
-        cur.name         AS currency_code,
-        pi.id            AS image_id
+        p.image_url,
+        cp.quantity,
+        cur.name         AS currency_code
       FROM cart c
       JOIN carts_products cp ON cp.cart_id = c.id
       JOIN product p         ON p.id = cp.product_id
       LEFT JOIN currency cur ON cur.id = p.currency_id
-      LEFT JOIN product_image pi ON pi.product_id = p.id
       WHERE c.id = $1
       ORDER BY cp.added_at
     `,

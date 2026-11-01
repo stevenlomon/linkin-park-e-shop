@@ -14,12 +14,10 @@ export async function getAllActiveProducts(categoryId?: number | null): Promise<
         p.id,
         p.name,
         p.current_price,
-        c.name AS currency_code,
-        pi.id AS image_id,
-        pi.alt_text AS image_alt_text
+        p.image_url,
+        c.name AS currency_code
       FROM product p
       LEFT JOIN currency c ON p.currency_id = c.id
-      LEFT JOIN product_image pi ON pi.product_id = p.id
       WHERE p.is_active = true
         AND ($1::int IS NULL OR p.category_id = $1)
       ORDER BY p.name
@@ -45,7 +43,9 @@ export async function getProductById(id: number): Promise<Product | null> {
         current_price,
         currency_id,
         category_id,
-        is_active
+        is_active,
+        image_url,
+        image_path
       FROM product
       WHERE id = $1
     `,
@@ -58,7 +58,7 @@ export async function getProductById(id: number): Promise<Product | null> {
 export async function getProductDetail(id: number): Promise<ProductDetail | null> {
   const query = {
     name: 'fetch-product-detail',
-    // Hämtar nu lagersaldo
+    // Hämtar nu även lagersaldo
     text: `
       SELECT
         p.id,
@@ -68,6 +68,7 @@ export async function getProductDetail(id: number): Promise<ProductDetail | null
         p.current_price,
         p.is_active,
         p.stock,
+        p.image_url, -- Detta hanterades av getProductImage tidigare, nu får vi image URL härifrån istället
         cu.name AS currency_code,
         ca.name AS category_name
       FROM product p

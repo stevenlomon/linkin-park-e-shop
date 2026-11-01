@@ -53,3 +53,21 @@ Möjliga förbättringar:
 - Embedded Checkout för att hålla kunden kvar på sidan (kräver `@stripe/stripe-js` + `@stripe/react-stripe-js`)
 - Lagerreservation med `FOR UPDATE`-lås för att undvika att två kunder köper sista exemplaret samtidigt
 - Orderbekräftelsemail efter betalning (via Resend, Nodemailer eller Stripes egna kvitton)
+
+## Produktbilder i molnlagring med Supabase Storage (Issue #19)
+
+Produktbilder lagras nu i Supabase Storage istället för som binary blobs i databasen. Admin laddar upp via redigeringssidan, bilden går genom servern (validering + upload) och serveras sedan direkt från Supabase CDN.
+
+### Designbeslut: server-in-the-middle istället för direktuppladdning
+
+Bilder skickas React → Server → Supabase, inte direkt från browsern. Detta ger oss server-side validering och håller `service_role`-nyckeln borta från klienten. Alternativet om jag förstår rätt vore signed upload URLs där servern skapar en tidsbegränsad URL och browsern laddar upp direkt till Supabase. Men detta kräver mer komplexitet och den avlastningen av servern behövs endast riktigt vid väldigt hög traffik. Inte när vi enbart har admins som laddar upp bilder.
+
+### Designbeslut: trestegsflöde vid bildersättning
+
+Upload → Spara i DB → Ta bort gammal fil. Ordningen säkerställer att produkten alltid har en bild. Om borttagning av den gamla filen misslyckas loggas felet men produkten visar den nya bilden. Vid radering är ordningen omvänd: nollställ DB → ta bort fil, för att undvika att en kund ser en bruten bild-URL.
+
+Möjliga förbättringar:
+
+- Stöd för fler bildformat (WebP, AVIF)
+- Flera bilder per produkt (bildgalleri)
+- Bildoptimering/komprimering på serversidan före upload

@@ -3,17 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { type Product, type Category, type Currency, type ProductImage } from '@/lib/types';
+import { type Product, type Category, type Currency } from '@/lib/types';
 import ImageUploadForm from './ImageUploadForm';
 
 interface EditProductFormProps {
   initialProductData: Product;
   leafCategories: Category[];
   currencies: Currency[];
-  existingImage: ProductImage | null;
+  // existingImage: ProductImage | null; Vi får image_url från initialProductData nu istället
 }
 
-export default function EditProductForm({ initialProductData, leafCategories, currencies, existingImage }: EditProductFormProps) {
+export default function EditProductForm({ initialProductData, leafCategories, currencies }: EditProductFormProps) {
   // För ifyllt med vår initialProductData!
   const [name, setName] = useState(initialProductData.name);
   const [description, setDescription] = useState(initialProductData.description ?? "");
@@ -56,11 +56,12 @@ export default function EditProductForm({ initialProductData, leafCategories, cu
     return true;
   }
 
-  async function handleImageDelete(imageId: number) {
+  async function handleImageDelete() {
     setImageError(null);
 
     try {
-      const res = await fetch(`/api/images/${imageId}`, { method: 'DELETE' });
+      // Kallar på samma route som product upload nu istället för vår gamla /api/images
+      const res = await fetch(`/api/products/${initialProductData.id}/images`, { method: 'DELETE' });
 
       if (!res.ok) {
         setImageError('Kunde inte radera bilden.');
@@ -197,14 +198,14 @@ export default function EditProductForm({ initialProductData, leafCategories, cu
         <div className="border-t border-line pt-6">
           <p className="lp-label">Produktbild</p>
 
-          {existingImage === null ? (
+          {!initialProductData.image_url ? (
             <p className="mb-4 text-xs text-muted">Den här produkten har ingen bild än.</p>
           ) : (
             <div className="mb-6 w-40">
               <div className="aspect-square overflow-hidden bg-tile">
                 <Image
-                  src={`/api/images/${existingImage.id}`}
-                  alt={existingImage.alt_text ?? initialProductData.name}
+                  src={initialProductData.image_url}
+                  alt={initialProductData.name}
                   width={160}
                   height={160}
                   className="h-full w-full object-cover"
@@ -213,7 +214,7 @@ export default function EditProductForm({ initialProductData, leafCategories, cu
 
               <button
                 type='button'
-                onClick={() => handleImageDelete(existingImage.id)}
+                onClick={handleImageDelete}
                 className="mt-2 w-full text-[11px] uppercase tracking-[0.15em] text-muted transition-colors hover:text-danger"
               >
                 Ta bort
