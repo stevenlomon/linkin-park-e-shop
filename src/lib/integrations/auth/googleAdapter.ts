@@ -16,3 +16,20 @@ function getConfig() {
 
   return { clientId, clientSecret, redirectUri };
 }
+
+export async function buildAuthURL(state: string): Promise<{url: string, codeVerifier: string}> {
+  const { clientId, redirectUri } = getConfig();
+
+  // Dessa två kommer skapas och få sina egna helper functions i nästkommande commits
+  // const codeVerifier = generateCodeVerifier(); 
+  // const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+  const params = new URLSearchParams({
+    // Kommer ha client_id, redirect_uri, scope etc etc.
+  });
+
+  return {
+    url: `${GOOGLE_AUTH_URL}?${params.toString()}`,
+    codeVerifier: "Ska skapas",
+  };
+}
