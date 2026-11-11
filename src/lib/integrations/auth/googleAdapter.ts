@@ -23,6 +23,21 @@ const TokenResponseSchema = z.object({
   token_type: z.string(),
 });
 
+const IdTokenPayloadSchema = z.object({
+  iss: z.enum(['accounts.google.com', 'https://accounts.google.com']), // Vi ser till 100% att Google issued the token payload
+  aud: z.string(), // Måste matcha vår Client ID
+  exp: z.number(), // Får inte vara expired
+
+  // Detta är användarinfon vi får ut från Google's JWT!
+  sub: z.string(), // Detta är en Google användares unika ID. Inte email som kan ändras!
+  email: z.email(),
+  email_verified: z.boolean().optional(),
+  name: z.string().optional(),
+  given_name: z.string().optional(),
+});
+
+export type GoogleUser = z.infer<typeof IdTokenPayloadSchema>;
+
 // Våra två helper functions för `code_verifier` och `code_challenge`. 
 // Dessa två faller båda under PKCE: Proof Key for Code Exchange
 // code_verifier är tydligen en random sträng på 43-128 tecken enligt RFC 7636
@@ -89,4 +104,9 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
 
   const data = TokenResponseSchema.parse(await res.json());
   return { idToken: data.id_token };
+}
+
+// Slutligen har vi denna sista funktion för att avkoda den JWT vi får i ovanstående funktion
+export function decodeAndValidateIdToken(idToken: string): GoogleUser {
+  return IdTokenPayloadSchema.parse("Kommer snart");
 }
