@@ -16,7 +16,7 @@ interface CheckoutFormProps {
 }
 
 export default function CheckoutForm({ user, cartTotal }: CheckoutFormProps) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(user?.username ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
 
   // Shipping state
