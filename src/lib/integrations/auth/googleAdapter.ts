@@ -52,6 +52,12 @@ function generateCodeChallenge(verifier: string): string {
   return hash.toString('base64url');
 }
 
+// Vår anti-forgery state token! En random sträng som sparas i en cookie innan redirect till Google.
+// I vår callback kommer `state` från Google att jämföras med cookien. Mismatch leder till avvisad inloggning
+export function generateState(): string {
+  return crypto.randomBytes(16).toString('hex'); // 'hex' är ett format som är mer läsbart än `base64url` och `base64`
+}
+
 export async function buildAuthURL(state: string): Promise<{url: string, codeVerifier: string}> {
   const { clientId, redirectUri } = getConfig();
 
