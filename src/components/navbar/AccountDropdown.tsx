@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation';
 import { type CurrentUser } from '@/lib/types'
 import LoginForm from './LoginForm'
 import LogoutButton from './LogoutButton'
@@ -13,6 +14,8 @@ export default function AccountDropdown({ user }: AccountDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const authError = searchParams.get('error');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -65,6 +68,16 @@ export default function AccountDropdown({ user }: AccountDropdownProps) {
 
       {isOpen && (
         <div className="absolute right-0 z-50 mt-4 w-80 border border-line bg-surface p-5 shadow-2xl">
+          {authError && (
+            <p role="alert" className="mb-4 text-xs text-danger">
+              {authError === 'cancelled'
+                ? 'Inloggningen avbröts.'
+                : authError === 'state'
+                  ? 'Säkerhetskontrollen misslyckades. Försök igen.'
+                  : 'Något gick fel med Google-inloggningen. Försök igen.'}
+            </p>
+          )}
+
           {user ? (
             <>
               <p className="lp-eyebrow mb-1">
