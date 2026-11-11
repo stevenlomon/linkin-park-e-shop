@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getOrdersByUser } from '@/lib/orders';
-// import OrderHistory from '@/components/account/OrderHistory'; Skapas i nästa commit
+import OrderHistory from '@/components/account/OrderHistory';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export default async function AccountPage() {
         <h1 className="lp-heading">Hej {user.username}!</h1>
       </header>
 
-      {/* <OrderHistory orders={orders} /> */}
+      <OrderHistory orders={orders} />
     </div>
   );
 }
