@@ -17,6 +17,12 @@ function getConfig() {
   return { clientId, clientSecret, redirectUri };
 }
 
+const TokenResponseSchema = z.object({
+  id_token: z.string(),
+  access_token: z.string(),
+  token_type: z.string(),
+});
+
 // Våra två helper functions för `code_verifier` och `code_challenge`. 
 // Dessa två faller båda under PKCE: Proof Key for Code Exchange
 // code_verifier är tydligen en random sträng på 43-128 tecken enligt RFC 7636
@@ -54,4 +60,14 @@ export async function buildAuthURL(state: string): Promise<{url: string, codeVer
     url: `${GOOGLE_AUTH_URL}?${params.toString()}`,
     codeVerifier,
   };
+}
+
+// Efter att användaren redirectats till auth URL:en via funktionen ovan och loggat in blir de redirected till vår callback
+// med en `code` och `state`. `code` byts här i denna funktion ut mot en id_token (JWT med användarinfo)
+export async function exchangeCodeForTokens(code: string, codeVerifier: string): Promise<{ idToken: string }> {
+  const { clientId, clientSecret, redirectUri } = getConfig();
+
+  // POST request till GOOGLE_TOKEN_URL, validation och extrahera id_token här
+
+  return { idToken: "Kommer snart" };
 }
