@@ -108,5 +108,28 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
 
 // Slutligen har vi denna sista funktion för att avkoda den JWT vi får i ovanstående funktion
 export function decodeAndValidateIdToken(idToken: string): GoogleUser {
-  return IdTokenPayloadSchema.parse("Kommer snart");
+  const { clientId } = getConfig();
+
+  // Googles id_token är en JWT med tre base64url-delar: header.payload.signature
+  const parts = idToken.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format: expected 3 parts');
+  }
+
+  // Avkoda JWT:n och validera data formen efter vårt Zod schema
+  const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+  const parsed = IdTokenPayloadSchema.parse(payload);
+
+  // En andra runda av validering. Inte av formen, utan av innehållet
+  if (parsed.aud !== clientId) {
+    throw new Error(`Invalid aud: expected ${clientId}, got ${parsed.aud}`);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (parsed.exp < now) {
+    throw new Error('ID token has expired');
+  }
+  
+  // Parsed och validated!
+  return parsed;
 }
