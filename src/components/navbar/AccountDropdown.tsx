@@ -64,7 +64,7 @@ export default function AccountDropdown({ user }: AccountDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-4 w-72 border border-line bg-surface p-5 shadow-2xl">
+        <div className="absolute right-0 z-50 mt-4 w-80 border border-line bg-surface p-5 shadow-2xl">
           {user ? (
             <>
               <p className="lp-eyebrow mb-1">
