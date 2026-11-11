@@ -34,7 +34,7 @@ export default function LogoutButton() {
   }
 
   return (
-    <button type='button' onClick={handleLogout} disabled={isLoggingOut} className="lp-btn-ghost py-2.5">
+    <button type='button' onClick={handleLogout} disabled={isLoggingOut} className="lp-btn-ghost w-full py-2.5">
       {isLoggingOut ? 'Loggar ut…' : 'Logga ut'}
     </button>
   )
