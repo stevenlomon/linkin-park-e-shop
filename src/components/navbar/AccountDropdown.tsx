@@ -85,6 +85,13 @@ export default function AccountDropdown({ user }: AccountDropdownProps) {
               </p>
               <p className="mb-5 text-xs text-muted">{user.email}</p>
 
+              <a
+                href="/account"
+                className="mb-3 block w-full border border-line py-2.5 text-center text-xs font-bold uppercase tracking-widest transition-colors hover:bg-bone/10"
+              >
+                Mina sidor
+              </a>
+
               <LogoutButton />
             </>
           ) : (
