@@ -1,5 +1,5 @@
 import { pool } from './db';
-import { type AdminOrder } from './types';
+import { type AdminOrder, CustomerOrder } from './types';
 
 export async function getAllOrders(): Promise<AdminOrder[]> {
   const query = {
@@ -47,3 +47,39 @@ export async function getAllOrders(): Promise<AdminOrder[]> {
   const res = await pool.query<AdminOrder>(query);
   return res.rows;
 };
+
+export async function getOrdersByUser(userId: number): Promise<CustomerOrder[]> {
+  // Exakt samma aggregation logik som i admin queryn ovan. Men utan User table JOIN eftersom vi inte behöver hämta username,
+  // email etc etc + vi måste använda `WHERE o.user_id = $1` av säkerhets skäl. Vi vill bara visa den inloggade användarens ordrar!
+  const query = {
+    name: 'fetch-user-orders',
+    text: `
+      SELECT
+        o.id,
+        o.ordered_at,
+        o.status,
+        COALESCE(SUM(op.quantity), 0)::int AS item_count,
+        COALESCE(SUM(op.quantity * op.price_at_purchase), 0) AS total,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'name', p.name,
+              'quantity', op.quantity,
+              'price_at_purchase', op.price_at_purchase
+            ) ORDER BY p.name
+          ) FILTER (WHERE op.id IS NOT NULL),
+          '[]'
+        ) AS items
+      FROM "Order" o
+      LEFT JOIN orders_products op ON op.order_id = o.id
+      LEFT JOIN product p          ON p.id = op.product_id
+      WHERE o.user_id = $1
+      GROUP BY o.id
+      ORDER BY o.ordered_at DESC
+    `,
+    values: [userId],
+  };
+
+  const res = await pool.query<CustomerOrder>(query);
+  return res.rows;
+}
