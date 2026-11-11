@@ -39,11 +39,19 @@ export async function buildAuthURL(state: string): Promise<{url: string, codeVer
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
   const params = new URLSearchParams({
-    // Kommer ha client_id, redirect_uri, scope etc etc.
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code', // Annars finns tydligen bl.a. `token` vilket är mindre secure eftersom token:et blir exposed i browsern
+    scope: 'openid email profile', // Principle of least privilege!
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    access_type: 'online', // Google erbjuder även 'offline' för vissa use cases
+    prompt: 'select_account',
   });
 
   return {
     url: `${GOOGLE_AUTH_URL}?${params.toString()}`,
-    codeVerifier: "Ska skapas",
+    codeVerifier,
   };
 }
