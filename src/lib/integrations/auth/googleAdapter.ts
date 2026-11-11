@@ -67,7 +67,26 @@ export async function buildAuthURL(state: string): Promise<{url: string, codeVer
 export async function exchangeCodeForTokens(code: string, codeVerifier: string): Promise<{ idToken: string }> {
   const { clientId, clientSecret, redirectUri } = getConfig();
 
-  // POST request till GOOGLE_TOKEN_URL, validation och extrahera id_token här
+  // Server-to-server POST request som innehåller `code`. Från denna response får vi id_token
+  const res = await fetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+      code_verifier: codeVerifier,
+    }),
+    signal: AbortSignal.timeout(5_000), // Timeout efter 5 sekunder
+  });
 
-  return { idToken: "Kommer snart" };
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google token exchange failed (${res.status}): ${text}`);
+  }
+
+  const data = TokenResponseSchema.parse(await res.json());
+  return { idToken: data.id_token };
 }
