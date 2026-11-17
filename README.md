@@ -28,6 +28,7 @@ Se `.env.example` för vilka som behöver konfigurerar i `.env`. Kort om varje:
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`                | Stripe Dashboard                                     | Använd `sk_test_`-nycklar. Webhook-secret fås via `stripe listen --forward-to localhost:3000/api/stripe/webhook` |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY`                       | Supabase Dashboard → Settings → API                  | `service_role`-nyckeln, inte `anon`-nyckeln                                                                      |
 | `POSTNORD_API_KEY`                                          | PostNord Developer Portal (atdeveloper.postnord.com) | Sandbox-nyckel, gratis att skapa                                                                                 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | Google Cloud Console → APIs & Services → Credentials | OAuth 2.0 Client ID. Redirect URI måste matcha exakt i Console, `.env` och kod |
 
 ### Testa integrationerna lokalt
 
@@ -160,3 +161,29 @@ Jag ser fortfarande till att stå 100% för allting Git relaterat: Issues, commi
 
 Och all Claude's kod fungerade på första försöket utan att jag behövde rätta till nånting! Jag verifierade manuellt på localhost och kan se mitt närmaste postombud vid checkout!  
 Edit: Koden må ha funkat men lint steget visade att Claude kallade på `setState` i en `useEffect` vilket ger cascading renders errors och hindrar vå CI pipeline att köra igenom och merge:a in i main. Så *fungerande* kod men kanske inte den renaste koden haha
+
+### Kundinloggning med Google (Issue #25)
+
+Kunder kan logga in med sitt Google-konto via OAuth 2.0. Inloggade kunder ser sin orderhistorik under "Mina sidor". Befintlig lösenordsinloggning finns kvar som ett andra alternativ.
+
+**Designbeslut: session-cookie istället för JWT**
+
+Shoppens befintliga inloggning (användarnamn + lösenord) använde redan en session-cookie. Google-inloggningen återanvänder samma mekanism: callback:en sätter exakt samma cookie med användarens ID. Det innebär att `getCurrentUser()`, varukorg, checkout och logout fungerar identiskt oavsett hur kunden loggade in.
+
+**Designbeslut: manuell JWT-dekodning istället för jsonwebtoken-paketet**
+
+Vi dekrypterar Googles `id_token` med `Buffer.from(parts[1], 'base64url')` istället för att importera och använda `jsonwebtoken`-paketet. Anledningen: vi behöver inte verifiera signaturen! Eftersom denna token kommer direkt från Google över HTTPS i samma server-to-server request kani ngen tredje part ha kunnat manipulera den på vägen. Vi validerar ändå `aud` (måste vara vårt Client ID) och `exp` (får inte vara utgången), plus att Zod validerar formatet på hela payloaden.
+
+**Designbeslut: separata konton istället för automatisk kontomerging**
+
+Största beslutet på hela labben. Om en kund har ett lösenordskonto med anna@example.com och sen loggar in med Google med samma email, skapas ett nytt separat konto. Google-kontot ser inte lösenordskontos ordrar.
+
+Jag valde detta för att det är det simplaste valet. En automatisk merge kan dock leda till account takeover och felaktiga merges om man inte är försiktig så det finns även en säkerhets aspekt i valet. 
+
+I en produktionsmiljö hade vi implementerat det jag förstår är industry best practice: prompt-based merge. Då skulle kunden se ett meddelande som "Vi ser att det redan finns ett konto med den här emailen. Ange ditt lösenord för att länka kontona" och bevisa ägarskap innan kontona slås ihop. Det kräver dock ett helt UI-flow som ligger utanför labbens scope.
+
+**Möjliga förbättringar:**
+
+- Prompt-based merge för att länka lösenords- och Google-konton utan säkerhetsrisk
+- Stöd för fler OAuth-providers (GitHub, Microsoft) via samma adapter-mönster
+- Profilsida under "Mina sidor" där kunden kan se och redigera sina uppgifter
