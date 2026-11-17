@@ -187,3 +187,17 @@ I en produktionsmiljö hade vi implementerat det jag förstår är industry best
 - Prompt-based merge för att länka lösenords- och Google-konton utan säkerhetsrisk
 - Stöd för fler OAuth-providers (GitHub, Microsoft) via samma adapter-mönster
 - Profilsida under "Mina sidor" där kunden kan se och redigera sina uppgifter
+
+### Orderbekräftelse via e-post med Resend (Issue #27)
+
+När en order betalas skickar Stripe-webhooken en orderbekräftelse via Resend till kundens e-postadress. Mejlet innehåller ordernummer, produkter med antal och pris, och totalsumma. Utan egen domän skickas mailet från `onboarding@resend.dev`.
+
+**Designbeslut: raw fetch istället för Resend SDK**
+
+I mitt andra projekt Florilegium använder jag `resend`-paketet (SDK). Här valde jag istället raw `fetch` mot `https://api.resend.com/emails` istället. Det som Resend SDK:t gör under huven är tydligen ett enda POST-anrop med en Bearer-token. Vår adapter gör exakt det utan ett extra beroende. Det matchar även adapter-mönstret vi redan har för PostNord (raw fetch + Zod) och även föreläsarens walkthrough-kod.
+
+**Möjliga förbättringar:**
+
+- Spara Resends e-post-ID på ordern för spårning vid supportärenden
+- Egen domän i Resend för att skicka till vilken adress som helst (utan domän kan vi bara skicka till kontots egen e-post)
+- Admin-notifiering vid ny betalad order
