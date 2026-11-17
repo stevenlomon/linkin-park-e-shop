@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { verifyWebhook } from '@/lib/integrations/payments/stripeAdapter';
 
+// Två nya imports för att skicka order bekräftelse mail
+import { sendEmail } from '@/lib/integrations/email/resendAdapter';
+import { orderConfirmation } from '@/lib/orderConfirmation';
+
 // Jag va tvungen att ställa om min hjärna här. "Vi tar ju emot data. Varför är det då POST och inte GET?"
 // Vi definerar en endpoint! Stripe kör en POST request till vår endpoint så när vi skapar den här är det POST. Inte GET
 export async function POST(req: Request) {
@@ -71,6 +75,57 @@ export async function POST(req: Request) {
         // Om vi kommer hit kan vi säkert commit hela transaktionen
         await client.query('COMMIT');
         console.log('[WEBHOOK] Order betald + lager minskat:', orderId);
+
+        // NEW: Orderbekräftelse via e-post!
+        // Vi lägger in det här precis efter att order är betald, bekräftad och commitad.
+        // Email koden får sin egna try/catch block. Om emailet misslyckas ska vi inte ge status 500
+        try {
+          const orderDetails = await pool.query<{
+            guest_name: string;
+            guest_email: string;
+          }>(
+            `SELECT guest_name, guest_email FROM "Order" WHERE id = $1`,
+            [orderId],
+          );
+
+          const orderItems = await pool.query<{
+            name: string;
+            quantity: number;
+            price_at_purchase: string;
+          }>(
+            `SELECT p.name, op.quantity, op.price_at_purchase
+             FROM orders_products op
+             JOIN product p ON p.id = op.product_id
+             WHERE op.order_id = $1`,
+            [orderId],
+          );
+
+          if (orderDetails.rows[0] && orderItems.rows.length > 0) {
+            const order = orderDetails.rows[0];
+            const emailItems = orderItems.rows.map((row) => ({
+              name: row.name,
+              quantity: row.quantity,
+              price: Number(row.price_at_purchase),
+            }));
+            const total = emailItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+            const { subject, html, text } = orderConfirmation({
+              id: Number(orderId),
+              name: order.guest_name,
+              email: order.guest_email,
+              items: emailItems,
+              total,
+            });
+
+            const resendId = await sendEmail(
+              { to: order.guest_email, subject, html, text },
+              `order-confirmation/${orderId}`, // Det här är vår Idempotency key! 
+            );
+            console.log('[EMAIL] Skickad:', subject, '– Resend id:', resendId);
+          }
+        } catch (err) {
+          console.error('[EMAIL] Misslyckades:', err);
+        }
       } catch (err) {
         await client.query('ROLLBACK');
         console.error('[WEBHOOK] Kunde inte uppdatera order:', err);
