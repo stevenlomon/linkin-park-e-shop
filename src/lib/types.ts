@@ -104,3 +104,11 @@ export interface AdminOrder {
   guest_email: string | null;
 }
 
+// Första gången jag nånsin ser och använder `Pick`! Vi bokstavligen plockar endast de nycklar från en annan interface till denna
+// nya. Det blir dock inte en `interface`, utan en `type` vilket är smått irriterande eftersom allt annat i denna fil är interfaces.
+// Men funktionellt är de samma i detta scenario, till skillnad från i vår algoliaAdapter.ts där valet faktiskt hade vikt!
+export type CustomerOrder = Pick<
+  AdminOrder,
+  'id' | 'ordered_at' | 'status' | 'item_count' | 'total' | 'items'
+>;
+
